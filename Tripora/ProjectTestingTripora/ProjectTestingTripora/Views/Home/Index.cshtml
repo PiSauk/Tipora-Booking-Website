@@ -1,0 +1,276 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tripora | Bus Ticket Booking</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <!-- Top Header -->
+    <header class="header">
+        <div class="container header__inner">
+            <a class="brand" href="#">
+                <span class="brand__logo">Tripora</span>
+            </a>
+
+            <nav class="nav">
+                <a href="#features">Features</a>
+                <a href="#faq">FAQ</a>
+                <a href="#footer">Contact</a>
+            </nav>
+
+            <div class="header__actions">
+                <a class="btn btn--ghost" href="#">Log in</a>
+                <a class="btn btn--primary" href="#">Sign up</a>
+            </div>
+
+            <button class="burger" aria-label="Open menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero -->
+    <main>
+        <section class="hero" aria-label="Tripora bus ticket search">
+            <div class="hero__bg" role="img" aria-label="City and travel background"></div>
+            <div class="hero__overlay"></div>
+
+            <div class="container hero__content">
+                <h1>Book Bus Tickets Across Southeast Asia</h1>
+                <p class="hero__subtitle">
+                    Fast search, clear schedules, and easy booking — all in one place.
+                </p>
+
+                <!-- Search Card -->
+                <form class="search-card" action="#" method="GET">
+                    <div class="search-card__row">
+                        <div class="field">
+                            <label for="from">From</label>
+                            <input id="from" name="from" type="text" placeholder="e.g., Singapore" autocomplete="off" />
+                        </div>
+
+                        <div class="field">
+                            <label for="to">To</label>
+                            <input id="to" name="to" type="text" placeholder="e.g., Kuala Lumpur" autocomplete="off" />
+                        </div>
+
+                        <div class="field">
+                            <label for="date">Departure Date</label>
+                            <input id="date" name="date" type="date" />
+                        </div>
+
+                        <div class="field">
+                            <label for="pax">No. of Pax</label>
+                            <select id="pax" name="pax">
+                                <option value="1">1</option>
+                                <option value="2" selected>2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn--primary btn--block" type="submit">
+                            Search Bus
+                        </button>
+                    </div>
+
+                    <div class="search-card__meta">
+                        <a class="link" href="#">Advanced Search</a>
+                        <span class="dot">•</span>
+                        <span class="meta-text">Example: Singapore → Malacca</span>
+                    </div>
+                </form>
+
+                <div class="trust">
+                    <div class="trust__item">
+                        <span class="trust__icon" aria-hidden="true">⚡</span>
+                        <span>Fast search</span>
+                    </div>
+                    <div class="trust__item">
+                        <span class="trust__icon" aria-hidden="true">🚌</span>
+                        <span>Multiple operators</span>
+                    </div>
+                    <div class="trust__item">
+                        <span class="trust__icon" aria-hidden="true">🔒</span>
+                        <span>Secure checkout (later)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Partner / Logos row (optional) -->
+        <section class="logos" aria-label="Partners">
+            <div class="container logos__inner">
+                <div class="logo-pill">SmartFinder</div>
+                <div class="logo-pill">Zoomer</div>
+                <div class="logo-pill">AirVenua</div>
+                <div class="logo-pill">Kontrar</div>
+                <div class="logo-pill">Waveshaust</div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section id="features" class="section">
+            <div class="container">
+                <div class="section__head">
+                    <h2>The tools you need</h2>
+                    <p>Everything for a smooth bus booking experience — simple and clear.</p>
+                </div>
+
+                <div class="grid-3">
+                    <article class="card">
+                        <h3>Simple Search</h3>
+                        <p>Find routes quickly with clear timing and pricing.</p>
+                    </article>
+
+                    <article class="card">
+                        <h3>Compare Options</h3>
+                        <p>Sort by price, duration, departure time, and operator (later).</p>
+                    </article>
+
+                    <article class="card">
+                        <h3>Easy Booking</h3>
+                        <p>Fill passenger details and confirm your booking in minutes.</p>
+                    </article>
+                </div>
+
+                <div class="cta">
+                    <div>
+                        <h3>Ready to build your trip?</h3>
+                        <p>Start by searching routes above — data can be connected later.</p>
+                    </div>
+                    <a class="btn btn--primary" href="#">Primary Action</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Info / Services -->
+        <section class="section section--soft">
+            <div class="container">
+                <div class="section__head">
+                    <h2>Why Tripora</h2>
+                    <p>Designed for clarity — inspired by real booking platforms.</p>
+                </div>
+
+                <div class="grid-2">
+                    <article class="card card--row">
+                        <div class="icon" aria-hidden="true">📅</div>
+                        <div>
+                            <h3>Clear Schedules</h3>
+                            <p>Show operator, departure and arrival details clearly for users.</p>
+                        </div>
+                    </article>
+
+                    <article class="card card--row">
+                        <div class="icon" aria-hidden="true">💳</div>
+                        <div>
+                            <h3>Checkout Ready</h3>
+                            <p>Add payment integration later without redesigning the UI.</p>
+                        </div>
+                    </article>
+
+                    <article class="card card--row">
+                        <div class="icon" aria-hidden="true">📍</div>
+                        <div>
+                            <h3>Pickup Points</h3>
+                            <p>Support boarding and drop-off points per route (later).</p>
+                        </div>
+                    </article>
+
+                    <article class="card card--row">
+                        <div class="icon" aria-hidden="true">🧾</div>
+                        <div>
+                            <h3>Booking Reference</h3>
+                            <p>Generate booking IDs and confirmation pages (later).</p>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section id="faq" class="section">
+            <div class="container">
+                <div class="section__head">
+                    <h2>Frequently asked questions</h2>
+                    <p>Replace these with your real project FAQs later.</p>
+                </div>
+
+                <div class="faq">
+                    <details class="faq__item">
+                        <summary>What is Tripora?</summary>
+                        <p>Tripora is a bus booking website project that helps users search routes and book tickets.</p>
+                    </details>
+
+                    <details class="faq__item">
+                        <summary>Can I add real bus operators later?</summary>
+                        <p>Yes. The homepage is designed to connect to APIs and databases later without redesign.</p>
+                    </details>
+
+                    <details class="faq__item">
+                        <summary>Will Tripora support seat selection?</summary>
+                        <p>You can add a seat map in the trip details page as a future enhancement.</p>
+                    </details>
+
+                    <details class="faq__item">
+                        <summary>How do I contact you?</summary>
+                        <p>Use the footer contact links or add a “Contact Us” page.</p>
+                    </details>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer id="footer" class="footer">
+        <div class="container footer__inner">
+            <div class="footer__brand">
+                <div class="brand__logo brand__logo--footer">Tripora</div>
+                <p>Bus booking made simple. Built for your project — extend anytime.</p>
+            </div>
+
+            <div class="footer__cols">
+                <div class="footer__col">
+                    <h4>Company</h4>
+                    <a href="#">About</a>
+                    <a href="#">Careers</a>
+                    <a href="#">Press</a>
+                </div>
+                <div class="footer__col">
+                    <h4>Support</h4>
+                    <a href="#">Help Center</a>
+                    <a href="#">Terms</a>
+                    <a href="#">Privacy</a>
+                </div>
+                <div class="footer__col">
+                    <h4>Contact</h4>
+                    <a href="#">Email</a>
+                    <a href="#">Instagram</a>
+                    <a href="#">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="container footer__bottom">
+            <span>© <span id="year"></span> Tripora. All rights reserved.</span>
+        </div>
+    </footer>
+
+    <script>
+        // set year only
+        document.getElementById("year").textContent = new Date().getFullYear();
+
+        // mobile menu (basic toggle)
+        const burger = document.querySelector(".burger");
+        const nav = document.querySelector(".nav");
+        burger.addEventListener("click", () => {
+          const open = nav.classList.toggle("nav--open");
+          burger.setAttribute("aria-expanded", String(open));
+        });
+    </script>
+</body>
+</html>

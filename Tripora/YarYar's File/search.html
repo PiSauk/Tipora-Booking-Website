@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tripora | Bus Results</title>
+  <link rel="stylesheet" href="search.css" />
+</head>
+
+<!-- Seat Selection Modal -->
+<div class="modal" id="seatModal" aria-hidden="true">
+  <div class="modal__backdrop" data-close="true"></div>
+
+  <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="seatTitle">
+    <div class="modal__header">
+      <h3 id="seatTitle">Choose Seats for Departing Trip</h3>
+      <button class="modal__close" type="button" aria-label="Close" data-close="true">×</button>
+    </div>
+
+    <div class="modal__body">
+      <div class="seat-legend">
+        <span class="legend-item"><span class="legend-box legend-box--available"></span> Available</span>
+        <span class="legend-item"><span class="legend-box legend-box--occupied"></span> Occupied</span>
+        <span class="legend-item"><span class="legend-box legend-box--selected"></span> Selected</span>
+      </div>
+
+      <div class="seatmap-wrap">
+        <div class="seatmap">
+          <div class="seatmap__front">Front</div>
+
+          <!-- Seat grid (3 columns like your screenshot: A | B | C) -->
+          <div class="seatgrid" id="seatGrid">
+            <!-- JS will generate seats here -->
+          </div>
+
+          <div class="seatmap__hint">Scroll down to view more seats...</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal__footer">
+      <div class="modal__summary">
+        Selected: <strong id="selectedCount">0</strong> /
+        <strong id="maxSelectable">2</strong>
+        <span class="dot">•</span>
+        Seats: <strong id="selectedSeats">-</strong>
+      </div>
+
+      <button class="btn btn--select" id="continueBtn" type="button" disabled>
+        Continue
+      </button>
+    </div>
+  </div>
+</div>
+
+<body>
+  <!-- Top bar like Easybook (search stays visible) -->
+  <header class="topbar">
+    <div class="container topbar__inner">
+      <a class="brand" href="index.html">Tripora</a>
+
+      <form class="mini-search" action="#" method="GET">
+        <div class="mini-search__icon" aria-hidden="true">🚌</div>
+
+        <label class="sr-only" for="from">From</label>
+        <input id="from" name="from" type="text" value="Singapore" placeholder="From" />
+
+        <span class="swap" aria-hidden="true">⇄</span>
+
+        <label class="sr-only" for="to">To</label>
+        <input id="to" name="to" type="text" value="Kuala Lumpur" placeholder="To" />
+
+        <label class="sr-only" for="date">Departure</label>
+        <input id="date" name="date" type="date" value="2026-01-14" />
+
+        <label class="sr-only" for="pax">Pax</label>
+        <select id="pax" name="pax">
+          <option>1</option>
+          <option selected>2</option>
+          <option>3</option>
+          <option>4</option>
+        </select>
+
+        <button class="btn btn--primary" type="submit">Search</button>
+      </form>
+
+      <nav class="top-actions">
+        <a href="#">Sign in</a>
+        <a class="btn btn--ghost" href="#">Help</a>
+      </nav>
+
+      <button class="filter-toggle" type="button" aria-label="Open filters">
+        Filters
+      </button>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <div class="crumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <a href="#">Bus Tickets</a>
+        <span>/</span>
+        <span class="crumbs__active">Singapore → Kuala Lumpur</span>
+      </div>
+
+      <!-- Route title bar -->
+      <section class="routebar" aria-label="Route summary">
+        <div class="routebar__left">
+          <div class="routebar__label">Depart Trip</div>
+          <div class="routebar__title">
+            <strong>Singapore, Singapore</strong>
+            <span class="arrow">→</span>
+            <strong>Kuala Lumpur, Malaysia</strong>
+          </div>
+        </div>
+        <div class="routebar__right">
+          <button class="routebar__nav" type="button" aria-label="Previous day">‹</button>
+          <div class="routebar__date">14 January 2026, Wed</div>
+          <button class="routebar__nav" type="button" aria-label="Next day">›</button>
+        </div>
+      </section>
+
+      <!-- Content grid -->
+      <section class="grid">
+        <!-- Filters -->
+        <aside class="filters" id="filters" aria-label="Filters">
+          <div class="filters__head">
+            <h3>Filter</h3>
+            <button class="link" type="button">Reset</button>
+          </div>
+
+          <div class="filter-block">
+            <button class="filter-block__title" type="button">
+              Depart Time <span class="chev">▾</span>
+            </button>
+            <div class="filter-block__content">
+              <label class="check"><input type="checkbox" checked /> All</label>
+              <label class="check"><input type="checkbox" /> Morning (00:00–11:59)</label>
+              <label class="check"><input type="checkbox" /> Afternoon (12:00–18:59)</label>
+              <label class="check"><input type="checkbox" /> Evening (19:00–23:59)</label>
+            </div>
+          </div>
+
+          <div class="filter-block">
+            <button class="filter-block__title" type="button">
+              Bus Operator <span class="chev">▾</span>
+            </button>
+            <div class="filter-block__content">
+              <label class="check"><input type="checkbox" checked /> All</label>
+              <label class="check"><input type="checkbox" /> Cosmic Singapore</label>
+              <label class="check"><input type="checkbox" /> Billion Stars</label>
+              <label class="check"><input type="checkbox" /> Causeway Link</label>
+              <label class="check"><input type="checkbox" /> Super Nice</label>
+              <label class="check"><input type="checkbox" /> Sri Maju Group</label>
+            </div>
+          </div>
+
+          <div class="filter-block">
+            <button class="filter-block__title" type="button">
+              Price Range <span class="chev">▾</span>
+            </button>
+            <div class="filter-block__content">
+              <label class="check"><input type="checkbox" /> Under SGD 30</label>
+              <label class="check"><input type="checkbox" checked /> SGD 30–40</label>
+              <label class="check"><input type="checkbox" /> Above SGD 40</label>
+            </div>
+          </div>
+
+          <div class="filter-block">
+            <button class="filter-block__title" type="button">
+              Amenities <span class="chev">▾</span>
+            </button>
+            <div class="filter-block__content">
+              <label class="check"><input type="checkbox" /> Wi-Fi</label>
+              <label class="check"><input type="checkbox" /> Charging Port</label>
+              <label class="check"><input type="checkbox" /> Reclining Seat</label>
+              <label class="check"><input type="checkbox" /> Toilet</label>
+            </div>
+          </div>
+
+          <div class="filters__note">
+            This page is UI only (mock data). You can connect it to database later.
+          </div>
+        </aside>
+
+        <!-- Results -->
+        <section class="results" aria-label="Trip results">
+          <div class="results__head">
+            <div class="results__title">
+              <h2>Singapore → Kuala Lumpur</h2>
+              <span class="results__count">(8 trips found)</span>
+            </div>
+
+            <div class="results__sort">
+              <label for="sort">Sort by:</label>
+              <select id="sort" name="sort">
+                <option selected>Departure (Earliest)</option>
+                <option>Departure (Latest)</option>
+                <option>Price (Lowest)</option>
+                <option>Price (Highest)</option>
+                <option>Duration (Shortest)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Card 1 -->
+          <article class="trip-card">
+            <div class="trip-card__main">
+              <div class="time">
+                <div class="time__big">12:05 AM</div>
+                <div class="time__small">Duration: 05h 10m</div>
+              </div>
+
+              <div class="route">
+                <div class="route__point">
+                  <div class="route__name">Boon Lay</div>
+                  <div class="route__sub">Singapore</div>
+                </div>
+                <div class="route__arrow">→</div>
+                <div class="route__point">
+                  <div class="route__name">TBS (Terminal Bersepadu Selatan)</div>
+                  <div class="route__sub">Kuala Lumpur</div>
+                </div>
+              </div>
+
+              <div class="meta">
+                <div class="meta__row">
+                  <span class="pill">COSMIC SINGAPORE</span>
+                  <span class="stars" aria-label="Rating 4 out of 5">★★★★☆</span>
+                </div>
+                <div class="meta__row meta__muted">
+                  Executive • Double Decker
+                </div>
+                <div class="meta__row">
+                  <a class="link" href="#">Details</a>
+                  <span class="dot">•</span>
+                  <a class="link" href="#">Reviews</a>
+                </div>
+              </div>
+
+              <div class="price">
+                <div class="price__seats"><strong>38</strong> seats</div>
+                <div class="price__money">SGD <strong>35.00</strong></div>
+              </div>
+
+              <div class="action">
+                <button class="btn btn--select" type="button">Select</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 2 -->
+          <article class="trip-card">
+            <div class="trip-card__main">
+              <div class="time">
+                <div class="time__big">01:30 AM</div>
+                <div class="time__small">Duration: 05h 25m</div>
+              </div>
+
+              <div class="route">
+                <div class="route__point">
+                  <div class="route__name">Golden Mile</div>
+                  <div class="route__sub">Singapore</div>
+                </div>
+                <div class="route__arrow">→</div>
+                <div class="route__point">
+                  <div class="route__name">Berjaya Times Square</div>
+                  <div class="route__sub">Kuala Lumpur</div>
+                </div>
+              </div>
+
+              <div class="meta">
+                <div class="meta__row">
+                  <span class="pill pill--gray">Billion Stars</span>
+                  <span class="stars" aria-label="Rating 3 out of 5">★★★☆☆</span>
+                </div>
+                <div class="meta__row meta__muted">
+                  VIP • 27-seaters
+                </div>
+                <div class="meta__row">
+                  <a class="link" href="#">Details</a>
+                  <span class="dot">•</span>
+                  <a class="link" href="#">Photo</a>
+                </div>
+              </div>
+
+              <div class="price">
+                <div class="price__seats"><strong>24</strong> seats</div>
+                <div class="price__money">SGD <strong>37.00</strong></div>
+              </div>
+
+              <div class="action">
+                <button class="btn btn--select" type="button">Select</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Card 3 -->
+          <article class="trip-card">
+            <div class="trip-card__main">
+              <div class="time">
+                <div class="time__big">06:10 AM</div>
+                <div class="time__small">Duration: 04h 55m</div>
+              </div>
+
+              <div class="route">
+                <div class="route__point">
+                  <div class="route__name">Jurong East</div>
+                  <div class="route__sub">Singapore</div>
+                </div>
+                <div class="route__arrow">→</div>
+                <div class="route__point">
+                  <div class="route__name">KL Sentral</div>
+                  <div class="route__sub">Kuala Lumpur</div>
+                </div>
+              </div>
+
+              <div class="meta">
+                <div class="meta__row">
+                  <span class="pill">Super Nice</span>
+                  <span class="stars" aria-label="Rating 5 out of 5">★★★★★</span>
+                </div>
+                <div class="meta__row meta__muted">
+                  Premium • Reclining seats
+                </div>
+                <div class="meta__row">
+                  <a class="link" href="#">Details</a>
+                  <span class="dot">•</span>
+                  <a class="link" href="#">Refund policy</a>
+                </div>
+              </div>
+
+              <div class="price">
+                <div class="price__seats"><strong>18</strong> seats</div>
+                <div class="price__money">SGD <strong>45.00</strong></div>
+              </div>
+
+              <div class="action">
+                <button class="btn btn--select" type="button">Select</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- Pagination placeholder -->
+          <div class="pager">
+            <button class="btn btn--ghost" type="button">‹ Prev</button>
+            <span class="pager__info">Page 1 of 3</span>
+            <button class="btn btn--ghost" type="button">Next ›</button>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__inner">
+      <div>
+        <div class="footer__brand">Tripora</div>
+        <div class="footer__muted">UI demo page (no database yet).</div>
+      </div>
+      <div class="footer__links">
+        <a href="#">Terms</a>
+        <a href="#">Privacy</a>
+        <a href="#">Contact</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+  // ===== existing mobile filter toggle =====
+  const btn = document.querySelector(".filter-toggle");
+  const filters = document.querySelector(".filters");
+  btn?.addEventListener("click", () => {
+    filters.classList.toggle("filters--open");
+  });
+
+  // ===== Seat modal logic =====
+  const seatModal = document.getElementById("seatModal");
+  const seatGrid = document.getElementById("seatGrid");
+  const selectedCountEl = document.getElementById("selectedCount");
+  const maxSelectableEl = document.getElementById("maxSelectable");
+  const selectedSeatsEl = document.getElementById("selectedSeats");
+  const continueBtn = document.getElementById("continueBtn");
+
+  // Mock occupied seats (change anytime)
+  const occupiedSeats = new Set(["3A","4B","4C","7B","9C","10A"]);
+  let selectedSeats = new Set();
+  let maxSelectable = 2;
+
+  function openModal(){
+    seatModal.classList.add("is-open");
+    seatModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeModal(){
+    seatModal.classList.remove("is-open");
+    seatModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+
+  // Build a simple 12-row x 3-column seat map (A,B,C)
+  function buildSeats(rows = 12){
+    seatGrid.innerHTML = "";
+    selectedSeats = new Set();
+    updateSummary();
+
+    const cols = ["A","B","C"];
+    for(let r=1; r<=rows; r++){
+      for(const c of cols){
+        const seatId = `${r}${c}`;
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "seat";
+        button.textContent = seatId;
+        button.dataset.seat = seatId;
+
+        if(occupiedSeats.has(seatId)){
+          button.classList.add("is-occupied");
+          button.disabled = true;
+        }
+
+        button.addEventListener("click", () => toggleSeat(seatId, button));
+        seatGrid.appendChild(button);
+      }
+    }
+  }
+
+  function toggleSeat(seatId, el){
+    if (occupiedSeats.has(seatId)) return;
+
+    if (selectedSeats.has(seatId)){
+      selectedSeats.delete(seatId);
+      el.classList.remove("is-selected");
+    } else {
+      if (selectedSeats.size >= maxSelectable){
+        // simple feedback
+        alert(`You can select up to ${maxSelectable} seat(s).`);
+        return;
+      }
+      selectedSeats.add(seatId);
+      el.classList.add("is-selected");
+    }
+    updateSummary();
+  }
+
+  function updateSummary(){
+    selectedCountEl.textContent = String(selectedSeats.size);
+    maxSelectableEl.textContent = String(maxSelectable);
+    selectedSeatsEl.textContent = selectedSeats.size ? Array.from(selectedSeats).join(", ") : "-";
+    continueBtn.disabled = selectedSeats.size !== maxSelectable; // require exact pax
+  }
+
+  // Close when clicking backdrop or X
+  seatModal.addEventListener("click", (e) => {
+    if (e.target?.dataset?.close === "true") closeModal();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && seatModal.classList.contains("is-open")) closeModal();
+  });
+
+  // Hook: open modal when user clicks any Select button
+  document.querySelectorAll(".btn--select").forEach((button) => {
+    button.addEventListener("click", () => {
+      // Pax comes from top mini-search
+      const paxSelect = document.getElementById("pax");
+      maxSelectable = parseInt(paxSelect?.value || "1", 10);
+
+      buildSeats(18); // show more rows to allow scrolling
+      openModal();
+    });
+  });
+
+  // Continue button (for now, just closes modal)
+  continueBtn.addEventListener("click", () => {
+    alert(`Selected seats: ${Array.from(selectedSeats).join(", ")}`);
+    closeModal();
+    // Later: redirect to passenger-details page, e.g. window.location.href="checkout.html";
+  });
+
+  // Initial seat grid build (optional; modal rebuilds on open anyway)
+  buildSeats(18);
+</script>
+
+</body>
+</html>
