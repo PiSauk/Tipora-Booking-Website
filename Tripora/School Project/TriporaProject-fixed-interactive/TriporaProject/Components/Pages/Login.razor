@@ -1,0 +1,13 @@
+﻿@page "/login"
+@inject NavigationManager Nav
+
+@code {
+    protected override void OnInitialized()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var q = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var returnUrl = q["returnUrl"] ?? "/";
+
+        Nav.NavigateTo($"/?modal=login&returnUrl={Uri.EscapeDataString(returnUrl)}", replace: true);
+    }
+}

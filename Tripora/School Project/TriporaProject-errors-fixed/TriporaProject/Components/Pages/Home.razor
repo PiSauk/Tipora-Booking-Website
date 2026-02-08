@@ -1,0 +1,251 @@
+﻿@page "/"
+@layout TriporaProject.Components.Layout.TriporaLayout
+@inject NavigationManager Nav
+
+<header class="header">
+    <div class="container header__inner">
+        <NavLink class="brand" href="/">
+            <span class="brand__logo">Tripora</span>
+        </NavLink>
+
+        <nav class="nav">
+            <a href="#features">Features</a>
+            <a href="#faq">FAQ</a>
+            <a href="#footer">Contact</a>
+        </nav>
+
+        <div class="header__actions">
+            <button class="btn btn--ghost" type="button" @onclick="OpenLogin">Log in</button>
+            <button class="btn btn--primary" type="button" @onclick="OpenSignup">Sign up</button>
+        </div>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="hero__bg"></div>
+        <div class="hero__overlay"></div>
+
+        <div class="container hero__content">
+            <h1>Book Bus Tickets Across Southeast Asia</h1>
+            <p class="hero__subtitle">
+                Fast search, clear schedules, and easy booking — all in one place.
+            </p>
+
+            <div class="search-card">
+                <div class="search-card__row">
+
+                    <div class="field">
+                        <label>From</label>
+                        <input @bind="from" placeholder="e.g., Singapore" />
+                    </div>
+
+                    <div class="field">
+                        <label>To</label>
+                        <input @bind="to" placeholder="e.g., Kuala Lumpur" />
+                    </div>
+
+                    <div class="field">
+                        <label>Departure Date</label>
+                        <input type="date" @bind="date" />
+                    </div>
+
+                    <div class="field">
+                        <label>No. of Pax</label>
+                        <select @bind="pax">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+
+                    <!-- DIRECT LINK (stable) -->
+                    <a class="btn btn--primary btn--block"
+                       href="@($"/search?from={Uri.EscapeDataString(from)}&to={Uri.EscapeDataString(to)}&date={date:yyyy-MM-dd}&pax={pax}")">
+                        Search Bus
+                    </a>
+                </div>
+
+                <div class="search-card__meta">
+                    Example: Singapore → Malacca
+                </div>
+            </div>
+
+            <div class="trust">
+                <div class="trust__item">⚡ Fast search</div>
+                <div class="trust__item">🚌 Multiple operators</div>
+                <div class="trust__item">🔒 Secure checkout (later)</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="section section--soft">
+        <div class="container">
+            <div class="section__head">
+                <h2>Why Tripora</h2>
+                <p>Designed for clarity — inspired by real booking platforms.</p>
+            </div>
+
+            <div class="grid-2">
+                <article class="card card--row">
+                    <div class="icon">📅</div>
+                    <div>
+                        <h3>Clear Schedules</h3>
+                        <p>Show operator, departure and arrival details clearly.</p>
+                    </div>
+                </article>
+
+                <article class="card card--row">
+                    <div class="icon">💳</div>
+                    <div>
+                        <h3>Checkout Ready</h3>
+                        <p>Add payment integration later.</p>
+                    </div>
+                </article>
+
+                <article class="card card--row">
+                    <div class="icon">📍</div>
+                    <div>
+                        <h3>Pickup Points</h3>
+                        <p>Support boarding and drop-off points.</p>
+                    </div>
+                </article>
+
+                <article class="card card--row">
+                    <div class="icon">🧾</div>
+                    <div>
+                        <h3>Booking Reference</h3>
+                        <p>Generate booking IDs later.</p>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq" class="section">
+        <div class="container">
+            <div class="section__head">
+                <h2>Frequently Asked Questions</h2>
+                <p>Placeholder — your original FAQ design goes here.</p>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer id="footer" class="footer">
+    <div class="container footer__inner">
+        <div>
+            <strong>Tripora</strong>
+            <p>Bus booking made simple.</p>
+        </div>
+        <div class="footer__bottom">
+            © @DateTime.Now.Year Tripora
+        </div>
+    </div>
+</footer>
+
+@if (showAuthPopup)
+{
+    <div class="auth-overlay" @onclick="ClosePopup">
+        <div class="auth-box" @onclick:stopPropagation="true">
+            <div class="auth-head">
+                <h3>@(authMode == "login" ? "Login" : "Sign up")</h3>
+                <button class="auth-close" @onclick="ClosePopup">×</button>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab @(authMode == "login" ? "is-active" : "")"
+                        @onclick="() => SetAuthMode("login")">
+                    Login
+                </button>
+
+                <button class="auth-tab @(authMode == "signup" ? "is-active" : "")"
+                        @onclick="() => SetAuthMode("signup")">
+                    Sign up
+                </button>
+            </div>
+
+
+            <div class="auth-body">
+                <label>Email</label>
+                <input class="auth-input" @bind="email" />
+
+                <label>Password</label>
+                <input class="auth-input" type="password" @bind="password" />
+
+                @if (authMode == "signup")
+                {
+                    <label>Confirm Password</label>
+                    <input class="auth-input" type="password" @bind="confirmPassword" />
+                }
+
+                <button class="btn btn--primary btn--block" @onclick="SubmitAuth">
+                    @(authMode == "login" ? "Login" : "Create account")
+                </button>
+
+                @if (!string.IsNullOrWhiteSpace(authMessage))
+                {
+                    <div class="auth-msg">@authMessage</div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    string from = "";
+    string to = "";
+    DateTime date = DateTime.Today;
+    int pax = 1;
+
+    bool showAuthPopup = false;
+    string authMode = "login";
+
+    string email = "";
+    string password = "";
+    string confirmPassword = "";
+    string authMessage = "";
+
+    void OpenLogin()
+    {
+        authMode = "login";
+        showAuthPopup = true;
+        ResetAuth();
+    }
+
+    void OpenSignup()
+    {
+        authMode = "signup";
+        showAuthPopup = true;
+        ResetAuth();
+    }
+
+    void SetAuthMode(string mode)
+    {
+        authMode = mode;
+        ResetAuth();
+    }
+
+    void ClosePopup()
+    {
+        showAuthPopup = false;
+        ResetAuth();
+    }
+
+    void ResetAuth()
+    {
+        email = "";
+        password = "";
+        confirmPassword = "";
+        authMessage = "";
+    }
+
+    void SubmitAuth()
+    {
+        authMessage = "Placeholder only. Connect to Identity later.";
+    }
+}
+
+
+

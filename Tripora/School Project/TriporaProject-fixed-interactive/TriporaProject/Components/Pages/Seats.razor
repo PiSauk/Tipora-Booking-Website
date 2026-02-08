@@ -1,0 +1,324 @@
+﻿@page "/seats"
+@layout TriporaProject.Components.Layout.TriporaLayout
+@using Microsoft.EntityFrameworkCore
+@using TriporaProject.Models
+@inject NavigationManager Nav
+@inject TriporaDbContext Db
+@inject TriporaProject.Services.AuthService Auth
+
+<div class="seat-page">
+
+    <div class="seat-page-header">
+        <h1>Choose Seats</h1>
+        <p class="seat-subtitle">Select your seats for the departing trip</p>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="seat-error">@error</div>
+    }
+    else if (isLoading)
+    {
+        <div class="seat-loading">Loading seats...</div>
+    }
+    else if (schedule is null)
+    {
+        <div class="seat-loading">Schedule not found.</div>
+    }
+    else
+    {
+        <div class="seat-summary">
+            <div class="seat-summary-item">
+                <div class="seat-summary-label">Departure</div>
+                <div class="seat-summary-value">@schedule.DepartureTime.ToString("dd MMM yyyy, HH:mm")</div>
+            </div>
+            <div class="seat-summary-item">
+                <div class="seat-summary-label">Arrival</div>
+                <div class="seat-summary-value">@schedule.ArrivalTime.ToString("dd MMM yyyy, HH:mm")</div>
+            </div>
+            <div class="seat-summary-item">
+                <div class="seat-summary-label">Price</div>
+                <div class="seat-summary-value">SGD @schedule.BasePrice.ToString("0.00")</div>
+            </div>
+            <div class="seat-summary-item">
+                <div class="seat-summary-label">Seats Left</div>
+                <div class="seat-summary-value">@schedule.AvailableSeats</div>
+            </div>
+            <div class="seat-summary-item">
+                <div class="seat-summary-label">Pax</div>
+                <div class="seat-summary-value">@pax</div>
+            </div>
+        </div>
+
+        <div class="seat-legend">
+            <div class="legend-item">
+                <span class="legend-box legend-available"></span>
+                <span>Available</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-box legend-occupied"></span>
+                <span>Occupied</span>
+            </div>
+            <div class="legend-item">
+                <span class="legend-box legend-selected"></span>
+                <span>Selected</span>
+            </div>
+        </div>
+
+        <div class="seat-map-wrap">
+            <div class="seat-front">Front</div>
+
+            <div class="seat-grid">
+                @foreach (var seat in seatsOrdered)
+                {
+                    var isBooked = IsBooked(seat);
+                    var isSelected = selectedSeatCodes.Contains(seat.SeatCode);
+
+                    var css = "seat-btn";
+                    if (isBooked) css += " is-booked";
+                    else if (isSelected) css += " is-selected";
+
+                    <button class="@css"
+                            disabled="@isBooked"
+                            @onclick="() => ToggleSeat(seat.SeatCode)">
+                        @seat.SeatCode
+                    </button>
+                }
+            </div>
+        </div>
+
+        <div class="seat-bottom-bar">
+            <div class="seat-bottom-left">
+                <strong>Selected:</strong> @selectedSeatCodes.Count / @pax
+                <span class="seat-bottom-seats">
+                    — @((selectedSeatCodes.Count == 0) ? "-" : string.Join(", ", selectedSeatCodes.OrderBy(x => x)))
+                </span>
+            </div>
+
+            <button class="seat-continue-btn"
+                    @onclick="ConfirmSelectionAsync"
+                    disabled="@(selectedSeatCodes.Count != pax || isConfirming)">
+                @(isConfirming ? "Processing..." : "Continue")
+            </button>
+        </div>
+    }
+
+</div>
+
+@code {
+    bool isLoading = true;
+    bool isConfirming = false;
+    string? error;
+
+    Schedule? schedule;
+    List<ScheduleSeat> seats = new();
+    List<ScheduleSeat> seatsOrdered = new();
+
+    int scheduleId;
+    int pax = 1;
+
+    HashSet<string> selectedSeatCodes = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var uri = Nav.ToAbsoluteUri(Nav.Uri);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+            _ = int.TryParse(query["scheduleId"], out scheduleId);
+            if (scheduleId <= 0)
+                _ = int.TryParse(query["scheduledId"], out scheduleId); // fallback typo
+
+            if (scheduleId <= 0)
+            {
+                error = "Missing or invalid scheduleId in URL. Example: /seats?scheduleId=24&pax=2";
+                return;
+            }
+
+            if (int.TryParse(query["pax"], out var parsedPax) && parsedPax > 0)
+                pax = parsedPax;
+
+            schedule = await Db.Schedules.AsNoTracking().FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
+            if (schedule is null)
+            {
+                error = $"Schedule not found (ID={scheduleId}).";
+                return;
+            }
+
+            seats = await Db.ScheduleSeats
+                .Where(ss => ss.ScheduleId == scheduleId)
+                .AsNoTracking()
+                .ToListAsync();
+
+            if (seats.Count == 0)
+            {
+                error = "No seats found for this schedule. Seed ScheduleSeat rows first.";
+                return;
+            }
+
+            seatsOrdered = seats
+                .OrderBy(s => SeatSortKey(s.SeatCode))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            error = ex.InnerException?.Message ?? ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    bool IsBooked(ScheduleSeat seat)
+        => string.Equals(seat.Status, "Booked", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(seat.Status, "Occupied", StringComparison.OrdinalIgnoreCase);
+
+    void ToggleSeat(string seatCode)
+    {
+        if (selectedSeatCodes.Contains(seatCode))
+        {
+            selectedSeatCodes.Remove(seatCode);
+            return;
+        }
+
+        if (selectedSeatCodes.Count >= pax)
+            return;
+
+        selectedSeatCodes.Add(seatCode);
+    }
+
+    // ✅ Build SAME-PAGE url with modal=login (so you don't jump to Home)
+    string BuildLoginModalUrlOnSamePage()
+    {
+        var current = Nav.ToAbsoluteUri(Nav.Uri);
+        var q = System.Web.HttpUtility.ParseQueryString(current.Query);
+
+        // remove old modal params if any
+        q.Remove("modal");
+        q.Remove("returnUrl");
+        q.Remove("returnUrl");
+
+        // returnUrl = current page WITHOUT modal params
+        var cleanQuery = q.ToString();
+        var cleanPath = current.GetLeftPart(UriPartial.Path);
+        var cleanUrl = string.IsNullOrWhiteSpace(cleanQuery) ? cleanPath : $"{cleanPath}?{cleanQuery}";
+
+        // ensure returnUrl is relative for safety
+        var relative = "/" + Nav.ToBaseRelativePath(cleanUrl).TrimStart('/');
+
+        // now add modal params to the SAME PAGE
+        var sep = string.IsNullOrWhiteSpace(cleanQuery) ? "?" : "&";
+        return $"{cleanUrl}{sep}modal=login&returnUrl={Uri.EscapeDataString(relative)}";
+    }
+
+    async Task ConfirmSelectionAsync()
+    {
+        if (schedule is null) return;
+
+        if (selectedSeatCodes.Count != pax)
+        {
+            error = $"Please select exactly {pax} seat(s).";
+            return;
+        }
+
+        // ✅ Require login (OPEN MODAL ON THE SAME /seats PAGE)
+        if (!Auth.IsLoggedIn || Auth.CurrentUser is null)
+        {
+            error = "Please login before booking seats.";
+            Nav.NavigateTo(BuildLoginModalUrlOnSamePage(), replace: true);
+            return;
+        }
+
+        isConfirming = true;
+        error = null;
+
+        await using var tx = await Db.Database.BeginTransactionAsync();
+
+        try
+        {
+            void Fail(string msg) => throw new InvalidOperationException(msg);
+
+            var sched = await Db.Schedules.FirstOrDefaultAsync(s => s.ScheduleId == scheduleId);
+            if (sched is null) Fail("Schedule no longer exists. Please go back and search again.");
+
+            if (sched.AvailableSeats < pax)
+                Fail("Not enough seats available.");
+
+            var seatsToBook = await Db.ScheduleSeats
+                .Where(ss => ss.ScheduleId == scheduleId && selectedSeatCodes.Contains(ss.SeatCode))
+                .ToListAsync();
+
+            if (seatsToBook.Count != pax)
+                Fail("Some selected seats were not found. Please refresh and try again.");
+
+            if (seatsToBook.Any(IsBooked))
+                Fail("One or more selected seats are already booked. Please refresh and choose again.");
+
+            var userId = Auth.CurrentUser.UserId;
+
+            foreach (var ss in seatsToBook)
+            {
+                ss.Status = "Booked";
+                ss.HeldByUserId = null;
+                ss.HoldExpiry = null;
+                ss.Price ??= sched.BasePrice;
+            }
+
+            sched.AvailableSeats -= pax;
+
+            var booking = new Booking
+            {
+                UserId = userId,
+                ScheduleId = scheduleId,
+                BookingDate = DateTime.Now,
+                NumSeats = pax,
+                TotalPrice = sched.BasePrice * pax,
+                Status = "Confirm"
+            };
+
+            Db.Bookings.Add(booking);
+            await Db.SaveChangesAsync(); // bookingId created
+
+            foreach (var ss in seatsToBook)
+            {
+                Db.BookingSeats.Add(new BookingSeat
+                {
+                    BookingId = booking.BookingId,
+                    ScheduleId = scheduleId,
+                    SeatCode = ss.SeatCode,
+                    Price = (ss.Price ?? sched.BasePrice)
+                });
+            }
+
+            await Db.SaveChangesAsync();
+            await tx.CommitAsync();
+
+            // ✅ Go to PAYMENT page first (pass bookingId through)
+            Nav.NavigateTo($"/payment?bookingId={booking.BookingId}");
+        }
+        catch (Exception ex)
+        {
+            try { await tx.RollbackAsync(); } catch { }
+
+            error = ex is InvalidOperationException
+                ? ex.Message
+                : (ex.InnerException?.Message ?? ex.Message);
+        }
+        finally
+        {
+            isConfirming = false;
+        }
+    }
+
+    static (string letters, int number) SeatSortKey(string seatCode)
+    {
+        if (string.IsNullOrWhiteSpace(seatCode)) return ("", int.MaxValue);
+
+        var letters = new string(seatCode.TakeWhile(char.IsLetter).ToArray());
+        var digits = new string(seatCode.SkipWhile(char.IsLetter).ToArray());
+
+        return (letters, int.TryParse(digits, out var n) ? n : int.MaxValue);
+    }
+}

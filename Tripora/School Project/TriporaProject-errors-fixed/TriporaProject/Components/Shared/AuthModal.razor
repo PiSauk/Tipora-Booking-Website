@@ -1,0 +1,100 @@
+﻿@if (IsOpen)
+{
+    <div class="auth-overlay" @onclick="Close">
+        <div class="auth-box" @onclick:stopPropagation="true">
+            <div class="auth-head">
+                <h3>@(Mode == "login" ? "Login" : "Sign up")</h3>
+                <button class="auth-close" type="button" @onclick="Close">×</button>
+            </div>
+
+            <div class="auth-tabs">
+                <button type="button"
+                        class="auth-tab @(Mode == "login" ? "is-active" : "")"
+                        @onclick="() => SetMode("login")">
+                    Login
+                </button>
+
+                <button type="button"
+                        class="auth-tab @(Mode == "signup" ? "is-active" : "")"
+                        @onclick="() => SetMode(\"signup\")">
+                    Sign up
+                </button>
+            </div>
+
+            <EditForm Model="form" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="auth-body">
+                    <div class="auth-field">
+                        <label>Email</label>
+                        <InputText class="auth-input" @bind-Value="form.Email" />
+                    </div>
+
+                    <div class="auth-field">
+                        <label>Password</label>
+                        <InputText type="password" class="auth-input" @bind-Value="form.Password" />
+                    </div>
+
+                    @if (Mode == "signup")
+                    {
+                        <div class="auth-field">
+                            <label>Confirm Password</label>
+                            <InputText type="password" class="auth-input" @bind-Value="form.ConfirmPassword" />
+                        </div>
+                    }
+
+                    <button type="submit" class="btn btn--primary btn--block">
+                        @(Mode == "login" ? "Login" : "Create account")
+                    </button>
+
+                    @if (!string.IsNullOrWhiteSpace(Message))
+                    {
+                        <div class="auth-msg">@Message</div>
+                    }
+
+                    <div class="auth-note">
+                        Placeholder only. Next step: connect to ASP.NET Identity + SQL Server.
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    [Parameter] public string Mode { get; set; } = "login";
+    [Parameter] public EventCallback<string> ModeChanged { get; set; }
+
+    AuthFormModel form = new();
+    string Message = "";
+
+    async Task SetMode(string mode)
+    {
+        Mode = mode;
+        form = new AuthFormModel();
+        Message = "";
+        await ModeChanged.InvokeAsync(mode);
+    }
+
+    async Task Close()
+    {
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    void HandleSubmit()
+    {
+        Message = Mode == "login"
+            ? "Login submitted (placeholder)."
+            : "Sign-up submitted (placeholder).";
+    }
+
+    class AuthFormModel
+    {
+        public string Email { get; set; } = "";
+        public string Password { get; set; } = "";
+        public string ConfirmPassword { get; set; } = "";
+    }
+}

@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tripora | Payment</title>
+  <link rel="stylesheet" href="payment.css" />
+</head>
+
+<body>
+  <!-- Top Shell -->
+  <header class="topbar">
+    <div class="topbar__inner">
+      <div class="brand">
+        <div class="brand__logo">T</div>
+        <div class="brand__name">Tripora</div>
+      </div>
+
+      <div class="search">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 18a8 8 0 1 1 5.3-14A8 8 0 0 1 10 18Zm11 3-6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <input type="text" placeholder="Search trips, bookings, invoices..." />
+      </div>
+
+      <nav class="nav">
+        <a class="nav__link" href="#">Home</a>
+        <a class="nav__link" href="#">Search</a>
+        <a class="nav__link" href="#">Bookings</a>
+        <a class="nav__link nav__link--active" href="#">Payments</a>
+        <a class="nav__link" href="#">Support</a>
+      </nav>
+
+      <div class="top-actions">
+        <button class="icon-btn" aria-label="Notifications">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 22a2 2 0 0 0 2-2H10a2 2 0 0 0 2 2Zm6-6V11a6 6 0 0 0-5-5.9V4a1 1 0 1 0-2 0v1.1A6 6 0 0 0 6 11v5l-2 2v1h16v-1l-2-2Z" fill="currentColor"/>
+          </svg>
+        </button>
+        <button class="icon-btn" aria-label="Settings">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19.4 13a7.8 7.8 0 0 0 .1-1 7.8 7.8 0 0 0-.1-1l2-1.6a.6.6 0 0 0 .1-.8l-1.9-3.3a.6.6 0 0 0-.7-.3l-2.4 1a8 8 0 0 0-1.7-1l-.3-2.6a.6.6 0 0 0-.6-.5h-3.8a.6.6 0 0 0-.6.5L9.2 4a8 8 0 0 0-1.7 1l-2.4-1a.6.6 0 0 0-.7.3L2.5 7.6a.6.6 0 0 0 .1.8l2 1.6a7.8 7.8 0 0 0-.1 1 7.8 7.8 0 0 0 .1 1l-2 1.6a.6.6 0 0 0-.1.8l1.9 3.3a.6.6 0 0 0 .7.3l2.4-1a8 8 0 0 0 1.7 1l.3 2.6a.6.6 0 0 0 .6.5h3.8a.6.6 0 0 0 .6-.5l.3-2.6a8 8 0 0 0 1.7-1l2.4 1a.6.6 0 0 0 .7-.3l1.9-3.3a.6.6 0 0 0-.1-.8l-2-1.6ZM12 15.5A3.5 3.5 0 1 1 12 8a3.5 3.5 0 0 1 0 7.5Z" fill="currentColor"/>
+          </svg>
+        </button>
+        <div class="user">
+          <div class="user__avatar">KT</div>
+          <div class="user__meta">
+            <div class="user__name">Kaung Thet</div>
+            <div class="user__role">Student</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page -->
+  <main class="page">
+    <div class="container">
+      <div class="crumbs">
+        <a class="crumbs__link" href="#">Back to booking</a>
+        <span class="crumbs__sep">/</span>
+        <span class="crumbs__current">Payment</span>
+      </div>
+
+      <div class="layout">
+        <!-- Left / Main -->
+        <section class="main">
+          <!-- Payment Summary -->
+          <article class="card card--hero">
+            <div class="hero">
+              <div>
+                <div class="hero__title">
+                  Payment for <span class="muted">Booking</span> <span class="pill">#TRP-2401</span>
+                </div>
+                <div class="hero__sub">
+                  Status: <span class="status status--open">Pending</span>
+                  <span class="dot"></span>
+                  Due: <strong>Next month</strong>
+                </div>
+              </div>
+
+              <div class="hero__amount">
+                <div class="hero__amount-label">Total</div>
+                <div class="hero__amount-value">$ 22.50</div>
+              </div>
+            </div>
+
+            <div class="hero-actions">
+              <button class="btn btn--primary">Pay now</button>
+              <button class="btn btn--ghost">Save for later</button>
+              <button class="btn btn--ghost">Download receipt</button>
+            </div>
+          </article>
+
+          <!-- Payment Method -->
+          <article class="card">
+            <div class="card__head">
+              <h2 class="card__title">Choose a payment method</h2>
+              <div class="card__hint">Secure checkout (test UI only)</div>
+            </div>
+
+            <!-- Toggle -->
+            <div class="method-switch" role="tablist" aria-label="Payment method">
+              <input class="method-switch__input" type="radio" name="pm" id="pm-card" checked>
+              <label class="method-switch__tab" for="pm-card">Credit/Debit Card</label>
+
+              <input class="method-switch__input" type="radio" name="pm" id="pm-paynow">
+              <label class="method-switch__tab" for="pm-paynow">PayNow</label>
+
+              <span class="method-switch__indicator" aria-hidden="true"></span>
+            </div>
+
+            <!-- Panels -->
+            <div class="panels">
+              <!-- Card Panel -->
+              <section class="panel panel--card" aria-label="Credit/Debit Card form">
+                <form class="form" onsubmit="event.preventDefault(); alert('Demo only');">
+                  <div class="grid-2">
+                    <div class="field">
+                      <label>Cardholder name</label>
+                      <input type="text" placeholder="e.g., Kaung Thet Zin Oo" autocomplete="cc-name" />
+                    </div>
+                    <div class="field">
+                      <label>Email (receipt)</label>
+                      <input type="email" placeholder="name@email.com" autocomplete="email" />
+                    </div>
+                  </div>
+
+                  <div class="field">
+                    <label>Card number</label>
+                    <div class="input-with-icon">
+                      <input type="text" inputmode="numeric" placeholder="1234 5678 9012 3456" autocomplete="cc-number" />
+                      <span class="badge">VISA / MC</span>
+                    </div>
+                  </div>
+
+                  <div class="grid-3">
+                    <div class="field">
+                      <label>Expiry</label>
+                      <input type="text" inputmode="numeric" placeholder="MM/YY" autocomplete="cc-exp" />
+                    </div>
+                    <div class="field">
+                      <label>CVV</label>
+                      <input type="password" inputmode="numeric" placeholder="123" autocomplete="cc-csc" />
+                    </div>
+                    <div class="field">
+                      <label>Postal code</label>
+                      <input type="text" inputmode="numeric" placeholder="e.g., 123456" autocomplete="postal-code" />
+                    </div>
+                  </div>
+
+                  <div class="divider"></div>
+
+                  <div class="form-foot">
+                    <label class="check">
+                      <input type="checkbox" checked />
+                      <span>Save card for faster checkout (demo)</span>
+                    </label>
+                    <button class="btn btn--primary btn--wide" type="submit">Confirm payment</button>
+                  </div>
+                </form>
+              </section>
+
+              <!-- PayNow Panel -->
+              <section class="panel panel--paynow" aria-label="PayNow instructions">
+                <div class="paynow">
+                  <div class="paynow__left">
+                    <h3>PayNow via QR</h3>
+                    <p class="muted">
+                      Scan the QR code using your banking app. After payment, click “I’ve paid”.
+                    </p>
+
+                    <div class="paynow__steps">
+                      <div class="step">
+                        <div class="step__num">1</div>
+                        <div class="step__text">Open your bank app and choose PayNow / Scan QR.</div>
+                      </div>
+                      <div class="step">
+                        <div class="step__num">2</div>
+                        <div class="step__text">Verify amount and reference ID.</div>
+                      </div>
+                      <div class="step">
+                        <div class="step__num">3</div>
+                        <div class="step__text">Complete payment and return here.</div>
+                      </div>
+                    </div>
+
+                    <div class="grid-2">
+                      <div class="mini">
+                        <div class="mini__k">Amount</div>
+                        <div class="mini__v">$ 22.50</div>
+                      </div>
+                      <div class="mini">
+                        <div class="mini__k">Reference</div>
+                        <div class="mini__v">TRP-2401</div>
+                      </div>
+                    </div>
+
+                    <div class="paynow__actions">
+                      <button class="btn btn--primary" type="button" onclick="alert('Demo only');">I’ve paid</button>
+                      <button class="btn btn--ghost" type="button">Refresh QR</button>
+                    </div>
+                  </div>
+
+                  <div class="paynow__qr">
+                    <div class="qr">
+                      <div class="qr__box" aria-hidden="true"></div>
+                      <div class="qr__caption">PayNow QR (placeholder)</div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </article>
+
+          <!-- Summary Table -->
+          <article class="card">
+            <div class="card__head">
+              <h2 class="card__title">Trip summary</h2>
+              <div class="card__hint">Items included in this payment</div>
+            </div>
+
+            <div class="table">
+              <div class="table__row table__row--head">
+                <div>Description</div>
+                <div class="right">Qty</div>
+                <div class="right">Price</div>
+                <div class="right">Total</div>
+              </div>
+
+              <div class="table__row">
+                <div>
+                  <div class="strong">Bus ticket: Yangon → Mandalay</div>
+                  <div class="muted small">Seat 12A • Express</div>
+                </div>
+                <div class="right">1</div>
+                <div class="right">$18.00</div>
+                <div class="right">$18.00</div>
+              </div>
+
+              <div class="table__row">
+                <div>
+                  <div class="strong">Booking fee</div>
+                  <div class="muted small">Service charge</div>
+                </div>
+                <div class="right">1</div>
+                <div class="right">$4.50</div>
+                <div class="right">$4.50</div>
+              </div>
+
+              <div class="table__row table__row--foot">
+                <div class="muted">Total</div>
+                <div></div>
+                <div></div>
+                <div class="right strong">$22.50</div>
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <!-- Right / Sidebar -->
+        <aside class="side">
+          <article class="card">
+            <div class="card__head">
+              <h2 class="card__title">Details</h2>
+            </div>
+
+            <div class="detail">
+              <div class="detail__row">
+                <div class="detail__k">Passenger</div>
+                <div class="detail__v">Kaung Thet</div>
+              </div>
+              <div class="detail__row">
+                <div class="detail__k">Email</div>
+                <div class="detail__v">kaungthet@email.com</div>
+              </div>
+              <div class="detail__row">
+                <div class="detail__k">Travel date</div>
+                <div class="detail__v">Feb 5, 8:30 AM</div>
+              </div>
+              <div class="detail__row">
+                <div class="detail__k">Booking ID</div>
+                <div class="detail__v">TRP-2401</div>
+              </div>
+
+              <button class="btn btn--soft btn--wide">View invoice PDF</button>
+            </div>
+          </article>
+
+          <article class="card card--note">
+            <div class="note">
+              <div class="note__title">Tip</div>
+              <div class="note__text muted">
+                This is a UI mock. When you integrate backend later, connect “Confirm payment”
+                to your actual payment workflow.
+              </div>
+            </div>
+          </article>
+        </aside>
+      </div>
+    </div>
+  </main>
+
+  <!-- small helper to move indicator -->
+  <script>
+    const indicator = document.querySelector(".method-switch__indicator");
+    const card = document.getElementById("pm-card");
+    const paynow = document.getElementById("pm-paynow");
+
+    function move() {
+      indicator.style.transform = paynow.checked ? "translateX(100%)" : "translateX(0)";
+      document.body.classList.toggle("show-paynow", paynow.checked);
+    }
+    card.addEventListener("change", move);
+    paynow.addEventListener("change", move);
+    move();
+  </script>
+</body>
+</html>

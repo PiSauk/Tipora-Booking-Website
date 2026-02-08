@@ -1,0 +1,219 @@
+﻿@page "/mybooking"
+@layout TriporaProject.Components.Layout.TriporaLayout
+
+@using Microsoft.EntityFrameworkCore
+@using TriporaProject.Models
+
+@inject TriporaDbContext Db
+@inject TriporaProject.Services.AuthService Auth
+@inject NavigationManager Nav
+
+<div class="mb-wrap">
+
+    <div class="mb-header">
+        <div>
+            <h1 class="mb-title">My Bookings</h1>
+            <p class="mb-subtitle">View your booked trips and their current status.</p>
+        </div>
+
+        <div class="mb-actions">
+            <input class="mb-search"
+                   placeholder="Search (operator, bus, status)..."
+                   value="@search"
+                   @oninput="OnSearchInput" />
+
+            <select class="mb-filter"
+                    value="@statusFilter"
+                    @onchange="OnStatusChange">
+                <option value="">All status</option>
+                <option value="Confirm">Confirm</option>
+                <option value="Pending">Pending</option>
+                <option value="Cancelled">Cancelled</option>
+            </select>
+        </div>
+    </div>
+
+    @if (!Auth.IsLoggedIn || Auth.CurrentUser is null)
+    {
+        <div class="mb-card">
+            <div class="mb-empty">
+                <div class="mb-empty-title">Login required</div>
+                <div class="mb-empty-text">Please login to view your booked trips.</div>
+                <button class="btn btn--primary" @onclick="GoLogin">Login</button>
+            </div>
+        </div>
+    }
+    else if (isLoading)
+    {
+        <div class="mb-card">
+            <div class="mb-empty">Loading bookings...</div>
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div class="mb-card">
+            <div class="mb-empty" style="color:#b42318;">@error</div>
+        </div>
+    }
+    else if (filtered.Count == 0)
+    {
+        <div class="mb-card">
+            <div class="mb-empty">
+                <div class="mb-empty-title">No bookings found</div>
+                <div class="mb-empty-text">Try booking a trip from the Search page.</div>
+                <button class="btn btn--ghost" @onclick="GoSearch">Go to Search</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="mb-card">
+            <table class="mb-table">
+                <thead>
+                    <tr>
+                        <th>Operator</th>
+                        <th>Bus No.</th>
+                        <th>Departure</th>
+                        <th>Arrival</th>
+                        <th class="right">Total</th>
+                        <th>Status</th>
+                        <th class="right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in filtered)
+                    {
+                        <tr>
+                            <td>@b.OperatorName</td>
+                            <td>@b.BusNumber</td>
+                            <td>@b.Departure.ToString("dd MMM yyyy, HH:mm")</td>
+                            <td>@b.Arrival.ToString("dd MMM yyyy, HH:mm")</td>
+                            <td class="right">SGD @b.Total.ToString("0.00")</td>
+                            <td>
+                                <span class="@StatusPillClass(b.Status)">@b.Status</span>
+                            </td>
+                            <td class="right">
+                                <button class="mb-link" @onclick="() => ViewBooking(b.BookingId)">View</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="mb-foot">
+                Showing <strong>@filtered.Count</strong> booking(s)
+            </div>
+        </div>
+    }
+
+</div>
+
+@code {
+    private bool isLoading = true;
+    private string? error;
+
+    private string search = "";
+    private string statusFilter = "";
+
+    private List<Row> all = new();
+    private List<Row> filtered = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (!Auth.IsLoggedIn || Auth.CurrentUser is null)
+                return;
+
+            var userId = Auth.CurrentUser.UserId;
+
+            all = await (
+                from b in Db.Bookings.AsNoTracking()
+                join s in Db.Schedules.AsNoTracking() on b.ScheduleId equals s.ScheduleId
+                join t in Db.Transports.AsNoTracking() on s.TransportId equals t.TransportId
+                join o in Db.Operators.AsNoTracking() on t.OperatorId equals o.OperatorId
+                where b.UserId == userId
+                orderby b.BookingId descending
+                select new Row
+                {
+                    BookingId = b.BookingId,
+                    Status = b.Status,
+                    Total = b.TotalPrice,
+                    Departure = s.DepartureTime,
+                    Arrival = s.ArrivalTime,
+                    BusNumber = t.BusNumber,
+                    OperatorName = o.OperatorName
+                }
+            ).ToListAsync();
+
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            error = ex.InnerException?.Message ?? ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        search = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void OnStatusChange(ChangeEventArgs e)
+    {
+        statusFilter = e.Value?.ToString() ?? "";
+        ApplyFilters();
+    }
+
+    private void ApplyFilters()
+    {
+        IEnumerable<Row> q = all;
+
+        if (!string.IsNullOrWhiteSpace(statusFilter))
+            q = q.Where(x => string.Equals(x.Status, statusFilter, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim();
+            q = q.Where(x =>
+                x.OperatorName.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                x.BusNumber.Contains(s, StringComparison.OrdinalIgnoreCase) ||
+                x.Status.Contains(s, StringComparison.OrdinalIgnoreCase));
+        }
+
+        filtered = q.ToList();
+    }
+
+    private void GoLogin()
+    {
+        var returnUrl = Uri.EscapeDataString(Nav.Uri);
+        Nav.NavigateTo($"/login?returnUrl={returnUrl}");
+    }
+
+    private void GoSearch() => Nav.NavigateTo("/search");
+
+    private void ViewBooking(int bookingId) => Nav.NavigateTo($"/confirm?bookingId={bookingId}");
+
+    private string StatusPillClass(string status)
+    {
+        if (status.Equals("Confirm", StringComparison.OrdinalIgnoreCase)) return "mb-pill mb-pill-green";
+        if (status.Equals("Pending", StringComparison.OrdinalIgnoreCase)) return "mb-pill mb-pill-amber";
+        return "mb-pill mb-pill-gray";
+    }
+
+    private class Row
+    {
+        public int BookingId { get; set; }
+        public string OperatorName { get; set; } = "";
+        public string BusNumber { get; set; } = "";
+        public DateTime Departure { get; set; }
+        public DateTime Arrival { get; set; }
+        public decimal Total { get; set; }
+        public string Status { get; set; } = "";
+    }
+}

@@ -1,0 +1,177 @@
+﻿@page "/search"
+@layout TriporaProject.Components.Layout.TriporaLayout
+@inject NavigationManager Nav
+@using TriporaProject.Models
+
+<header class="topbar">
+    <div class="container topbar__inner">
+        <NavLink class="brand" href="/">Tripora</NavLink>
+
+        <form class="mini-search" @onsubmit="OnMiniSearch" @onsubmit:preventDefault="true">
+
+            <input type="text" placeholder="From" @bind="from" />
+            <span class="swap">⇄</span>
+            <input type="text" placeholder="To" @bind="to" />
+            <input type="date" @bind="date" />
+            <select @bind="pax">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+
+            <button class="btn btn--primary" type="submit">
+                Search
+            </button>
+        </form>
+
+        <div class="top-actions">
+            <button class="btn btn--ghost" type="button">Sign in</button>
+        </div>
+    </div>
+</header>
+
+<main class="page">
+    <div class="container">
+
+        <!-- Breadcrumb -->
+        <div class="crumbs">
+            <NavLink href="/">Home</NavLink>
+            <span>/</span>
+            <span class="crumbs__active">@($"{from} → {to}")</span>
+        </div>
+
+        <!-- Route summary -->
+        <section class="routebar">
+            <div class="routebar__left">
+                <div class="routebar__label">Depart Trip</div>
+                <div class="routebar__title">
+                    <strong>@from</strong>
+                    <span class="arrow">→</span>
+                    <strong>@to</strong>
+                </div>
+            </div>
+
+            <div class="routebar__right">
+                <div class="routebar__date">@date.ToString("dd MMM yyyy")</div>
+            </div>
+        </section>
+
+        <!-- Results -->
+        <section class="results">
+            <div class="results__head">
+                <h2>Available Buses</h2>
+                <span class="results__count">(@Trips.Count trips found)</span>
+            </div>
+
+            @foreach (var trip in Trips)
+            {
+                <article class="trip-card">
+                    <div class="trip-card__main">
+
+                        <div class="time">
+                            <div class="time__big">@trip.DepartTime.ToString("hh:mm tt")</div>
+                            <div class="time__small">Duration: @trip.DurationText</div>
+                        </div>
+
+                        <div class="route">
+                            <div class="route__point">
+                                <div class="route__name">@trip.PickupPoint</div>
+                                <div class="route__sub">@trip.From</div>
+                            </div>
+
+                            <div class="route__arrow">→</div>
+
+                            <div class="route__point">
+                                <div class="route__name">@trip.DropoffPoint</div>
+                                <div class="route__sub">@trip.To</div>
+                            </div>
+                        </div>
+
+                        <div class="price">
+                            <div class="price__seats"><strong>@trip.SeatsLeft</strong> seats</div>
+                            <div class="price__money">SGD <strong>@trip.Price.ToString("0.00")</strong></div>
+                            <div class="price__small">@trip.OperatorName</div>
+                        </div>
+
+                        <div class="action">
+                            <a class="btn btn--select"
+                               href="@($"/seats?tripId={trip.TripId}&from={Uri.EscapeDataString(from)}&to={Uri.EscapeDataString(to)}&date={date:yyyy-MM-dd}&pax={pax}")">
+                                Select
+                            </a>
+                        </div>
+
+                    </div>
+                </article>
+            }
+        </section>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container footer__inner">
+        <div>
+            <strong>Tripora</strong>
+            <p>Bus booking made simple.</p>
+        </div>
+        <div class="footer__bottom">
+            <span>© @DateTime.Now.Year Tripora</span>
+        </div>
+    </div>
+</footer>
+
+@code {
+    string from = "Singapore";
+    string to = "Kuala Lumpur";
+    DateTime date = DateTime.Today;
+    int pax = 1;
+
+    protected override void OnInitialized()
+    {
+        var uri = Nav.ToAbsoluteUri(Nav.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+
+        from = query["from"] ?? from;
+        to = query["to"] ?? to;
+
+        if (DateTime.TryParse(query["date"], out var d))
+            date = d;
+
+        if (int.TryParse(query["pax"], out var p))
+            pax = p;
+    }
+
+    void OnMiniSearch()
+    {
+        Nav.NavigateTo(
+            $"/search?from={Uri.EscapeDataString(from)}" +
+            $"&to={Uri.EscapeDataString(to)}" +
+            $"&date={date:yyyy-MM-dd}" +
+            $"&pax={pax}"
+        );
+    }
+    List<TripResult> Trips = new();
+
+    void LoadMockTrips()
+    {
+        Trips = new List<TripResult>
+    {
+        new TripResult {
+            TripId=101, OperatorName="KKKL Express",
+            From=from, To=to,
+            PickupPoint="Boon Lay", DropoffPoint="TBS",
+            DepartTime=new TimeOnly(0, 5), ArriveTime=new TimeOnly(5, 15),
+            Price=35.00m, SeatsLeft=38
+        },
+        new TripResult {
+            TripId=102, OperatorName="Starmart",
+            From=from, To=to,
+            PickupPoint="Golden Mile", DropoffPoint="Berjaya Times Square",
+            DepartTime=new TimeOnly(8, 30), ArriveTime=new TimeOnly(14, 0),
+            Price=42.00m, SeatsLeft=22
+        }
+    };
+    }
+
+}
+

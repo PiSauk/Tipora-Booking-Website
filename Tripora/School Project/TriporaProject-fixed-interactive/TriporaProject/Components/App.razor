@@ -1,0 +1,24 @@
+﻿@using Microsoft.AspNetCore.Components.Routing
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+
+    <!-- Blazor scoped CSS bundle (load FIRST so we can override it) -->
+    <link href="TriporaProject.styles.css" rel="stylesheet" />
+
+    <!-- Your custom CSS (load AFTER so it overrides everything) -->
+    <link href="css/style.css" rel="stylesheet" />
+    <link href="css/search.css" rel="stylesheet" />
+    <link href="css/site.css" rel="stylesheet" />
+
+    <HeadOutlet />
+</head>
+<body>
+    <Routes />
+    <script src="_framework/blazor.web.js"></script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+﻿/* ===== Mini search ===== */
+:deep(.mini-search) {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) 34px minmax(220px, 1fr) 170px 90px 120px;
+    gap: 12px;
+    align-items: center;
+}
+
+:deep(.mini-search input),
+:deep(.mini-search select) {
+    width: 100%;
+    min-width: 220px;
+    height: 44px;
+    padding: 0 14px;
+    box-sizing: border-box;
+}
+
+/* ===== Trip card button reset ===== */
+:deep(.trip-card) {
+    width: 100%;
+    display: block;
+    text-align: left;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+}
+
+/* focus ring */
+:deep(.trip-card:focus-visible) {
+    outline: 3px solid rgba(37, 99, 235, 0.35);
+    outline-offset: 4px;
+    border-radius: 16px;
+}
+
+/* ===== Main card layout (compact + aligned) ===== */
+:deep(.trip-card__main) {
+    display: grid;
+    grid-template-columns: minmax(150px, 190px) 1fr minmax(170px, 210px);
+    gap: 14px;
+    align-items: center;
+    /* compact feel */
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.10);
+    box-shadow: 0 14px 30px rgba(2, 6, 23, 0.06);
+}
+
+/* ===== LEFT ===== */
+:deep(.trip-left) {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+:deep(.trip-date) {
+    font-size: 13px;
+    color: #6b7280;
+}
+
+:deep(.trip-time) {
+    font-size: 20px; /* smaller */
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+:deep(.trip-arrive) {
+    font-size: 13px;
+    color: #374151;
+}
+
+/* ===== MIDDLE (fix vertical alignment) ===== */
+:deep(.trip-middle) {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    justify-content: center; /* ✅ centers inside its own column */
+    align-self: center; /* ✅ centers inside the grid row */
+}
+
+/* route line */
+:deep(.trip-route) {
+    display: flex;
+    align-items: center; /* ✅ not baseline */
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 15px; /* slightly smaller */
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+:deep(.trip-from),
+:deep(.trip-to) {
+    white-space: nowrap;
+}
+
+:deep(.trip-arrow) {
+    opacity: 0.7;
+    font-weight: 900;
+}
+
+/* seats line */
+:deep(.trip-seats) {
+    font-size: 13px;
+    color: rgba(15, 23, 42, 0.65);
+}
+
+/* ===== RIGHT ===== */
+:deep(.trip-right) {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center; /* ✅ vertically center */
+    gap: 6px;
+    text-align: right;
+}
+
+:deep(.trip-price) {
+    font-size: 16px; /* smaller */
+    font-weight: 900;
+}
+
+:deep(.trip-price strong) {
+    font-weight: 900;
+}
+
+:deep(.trip-cta) {
+    font-size: 13px;
+    color: #2563eb;
+    margin-top: 0; /* tighter */
+    font-weight: 700;
+}
+
+:deep(.trip-card:hover .trip-cta) {
+    text-decoration: underline;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 860px) {
+    :deep(.mini-search) {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    :deep(.mini-search .swap) {
+        display: none;
+    }
+
+    :deep(.trip-card__main) {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        align-items: start;
+    }
+
+    :deep(.trip-right) {
+        align-items: flex-start;
+        text-align: left;
+    }
+}

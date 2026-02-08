@@ -1,0 +1,381 @@
+﻿@page "/payment"
+@layout TriporaProject.Components.Layout.TriporaLayout
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.WebUtilities
+@using TriporaProject.Models
+@inject NavigationManager Nav
+@inject TriporaDbContext Db
+@implements IDisposable
+
+<div class="pay-page">
+    <div class="pay-grid">
+
+        <!-- LEFT: Payment form -->
+        <section class="pay-left">
+            <header class="pay-header">
+                <div>
+                    <h1 class="pay-title">Payment</h1>
+                    <p class="pay-subtitle">Choose your payment method and complete your booking.</p>
+                </div>
+
+                <div class="pay-timer" title="Live countdown (2 minutes)">
+                    <span class="dot"></span>
+                    <span>Session</span>
+                    <strong>@TimerText</strong>
+                </div>
+            </header>
+
+            <div class="pay-card">
+
+                <!-- Payment methods (Card + PayNow only) -->
+                <div class="pay-methods pay-methods-2">
+                    <button type="button"
+                            class="method-btn @(SelectedMethod == "Card" ? "active" : "")"
+                            @onclick="@(() => SelectedMethod = "Card")">
+                        <span class="method-icon">💳</span>
+                        <span class="method-text">
+                            <span class="method-name">Card</span>
+                            <span class="method-desc">Visa / Mastercard</span>
+                        </span>
+                    </button>
+
+                    <button type="button"
+                            class="method-btn @(SelectedMethod == "PayNow" ? "active" : "")"
+                            @onclick="@(() => SelectedMethod = "PayNow")">
+                        <span class="method-icon">🇸🇬</span>
+                        <span class="method-text">
+                            <span class="method-name">PayNow</span>
+                            <span class="method-desc">Scan QR to pay</span>
+                        </span>
+                    </button>
+                </div>
+
+                @if (SelectedMethod == "Card")
+                {
+                    <div class="form">
+                        <div class="field">
+                            <div class="label-row">
+                                <label>Card Number</label>
+                                <button type="button" class="link-btn">Edit</button>
+                            </div>
+                            <div class="input-wrap">
+                                <span class="brand-pill">MC</span>
+                                <input class="input"
+                                       placeholder="1234 5678 9012 3456"
+                                       value="@CardNumber"
+                                       @oninput="e => CardNumber = e.Value?.ToString() ?? string.Empty" />
+                                <span class="status-badge" title="UI only">✔</span>
+                            </div>
+                            <small>Enter the 16-digit card number on the card</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="field">
+                                <label>CVV</label>
+                                <div class="input-wrap">
+                                    <input class="input"
+                                           placeholder="123"
+                                           value="@Cvv"
+                                           @oninput="e => Cvv = e.Value?.ToString() ?? string.Empty" />
+                                    <span class="kbd-icon" title="UI only">⌗</span>
+                                </div>
+                                <small>3 or 4 digits on the card</small>
+                            </div>
+
+                            <div class="field">
+                                <label>Expiry</label>
+                                <div class="expiry">
+                                    <input class="input"
+                                           placeholder="MM"
+                                           value="@ExpMM"
+                                           @oninput="e => ExpMM = e.Value?.ToString() ?? string.Empty" />
+                                    <span class="slash">/</span>
+                                    <input class="input"
+                                           placeholder="YY"
+                                           value="@ExpYY"
+                                           @oninput="e => ExpYY = e.Value?.ToString() ?? string.Empty" />
+                                </div>
+                                <small>Card expiration date</small>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label>Password</label>
+                            <div class="input-wrap">
+                                <input class="input"
+                                       placeholder="••••••••"
+                                       type="password"
+                                       value="@Password"
+                                       @oninput="e => Password = e.Value?.ToString() ?? string.Empty" />
+                                <span class="kbd-icon" title="UI only">⌗</span>
+                            </div>
+                            <small>Dynamic password (UI only)</small>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="alt-method">
+                        <div class="alt-title">PayNow selected</div>
+                        <div class="alt-desc">
+                            Scan the QR code on the right using your banking app.
+                            After payment, click <strong>Pay Now</strong> to continue.
+                        </div>
+
+                        <div class="alt-hint">
+                            <span class="hint-badge">Tip</span>
+                            Bank app → PayNow → Scan & Pay
+                        </div>
+                    </div>
+                }
+
+                <div class="pay-actions">
+                    <button class="pay-btn" type="button" @onclick="GoConfirm" disabled="@PayDisabled">
+                        @(IsExpired ? "Session Expired" : "Pay Now")
+                        <span class="pay-amt">@TotalPrice.ToString("0.00") SGD</span>
+                    </button>
+
+                    @if (isLoading)
+                    {
+                        <div class="pay-note">Loading booking details...</div>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(loadError))
+                    {
+                        <div class="pay-note">@loadError</div>
+                    }
+                    else if (IsExpired)
+                    {
+                        <div class="pay-note">Session expired. Please go back and try again.</div>
+                    }
+                    else
+                    {
+                        <div class="pay-note">UI only — no real payment is processed yet.</div>
+                    }
+                </div>
+            </div>
+        </section>
+
+        <!-- RIGHT: PayNow QR + Trip summary -->
+        <aside class="pay-right">
+
+            <div class="qr-card">
+                <div class="qr-head">
+                    <div>
+                        <div class="qr-title">PayNow QR</div>
+                        <div class="qr-sub">Scan to pay securely</div>
+                    </div>
+                    <div class="qr-amount">
+                        <span>You have to pay</span>
+                        <strong>@TotalPrice.ToString("0.00") <small>SGD</small></strong>
+                    </div>
+                </div>
+
+                <div class="qr-body">
+                    <div class="qr-box">
+                        <img class="qr-img" src="@QrImagePath" alt="PayNow QR Code" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="summary-card">
+                <div class="sum-title">Trip Summary</div>
+
+                @if (isLoading)
+                {
+                    <div class="pay-note" style="text-align:left;">Loading trip summary...</div>
+                }
+                else if (!string.IsNullOrWhiteSpace(loadError))
+                {
+                    <div class="pay-note" style="text-align:left;">@loadError</div>
+                }
+                else
+                {
+                    <div class="sum-grid">
+                        <div class="sum-item">
+                            <div class="k">From</div>
+                            <div class="v">@TripFrom</div>
+                        </div>
+                        <div class="sum-item">
+                            <div class="k">To</div>
+                            <div class="v">@TripTo</div>
+                        </div>
+                        <div class="sum-item">
+                            <div class="k">Depart</div>
+                            <div class="v">@DepartureText</div>
+                        </div>
+                        <div class="sum-item">
+                            <div class="k">Arrive</div>
+                            <div class="v">@ArrivalText</div>
+                        </div>
+                    </div>
+
+                    <div class="sum-row">
+                        <div class="k">Seats</div>
+                        <div class="seat-chips">
+                            @foreach (var s in Seats)
+                            {
+                                <span class="chip">@s</span>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="sum-total">
+                        <span>Total</span>
+                        <strong>@TotalPrice.ToString("0.00") SGD</strong>
+                    </div>
+                }
+            </div>
+
+        </aside>
+    </div>
+</div>
+
+@code {
+    // ---------- Payment UI (mock inputs only) ----------
+    private string SelectedMethod = "PayNow";
+    private string CardNumber = "";
+    private string Cvv = "";
+    private string ExpMM = "";
+    private string ExpYY = "";
+    private string Password = "";
+
+    // Put your cat QR here: wwwroot/images/paynow-cat.png
+    private string QrImagePath = "images/Paynow Cat.png";
+
+    // ---------- Real booking data ----------
+    private int bookingId;
+    private Booking? booking;
+    private Schedule? schedule;
+
+    private List<string> Seats = new();
+    private decimal TotalPrice = 0m;
+
+    // From/To (single route)
+    private string TripFrom = "Singapore";
+    private string TripTo = "Kuala Lumpur";
+
+    private string DepartureText = "-";
+    private string ArrivalText = "-";
+
+    private bool isLoading = true;
+    private string? loadError;
+
+    // ---------- Live 2-minute timer ----------
+    private TimeSpan _remaining = TimeSpan.FromMinutes(2);
+    private System.Timers.Timer? _timer;
+
+    private string TimerText => $"{(int)_remaining.TotalMinutes:00}:{_remaining.Seconds:00}";
+    private bool IsExpired => _remaining <= TimeSpan.Zero;
+
+    private bool PayDisabled => IsExpired || isLoading || !string.IsNullOrWhiteSpace(loadError);
+
+    protected override async Task OnInitializedAsync()
+    {
+        StartTimer();
+
+        try
+        {
+            // bookingId from querystring: /payment?bookingId=123
+            var uri = new Uri(Nav.Uri);
+            var query = QueryHelpers.ParseQuery(uri.Query);
+
+            if (!query.TryGetValue("bookingId", out var bid) ||
+                !int.TryParse(bid.ToString(), out bookingId) ||
+                bookingId <= 0)
+            {
+                loadError = "Missing bookingId. Please go back and select seats again.";
+                return;
+            }
+
+            booking = await Db.Bookings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.BookingId == bookingId);
+
+            if (booking is null)
+            {
+                loadError = $"Booking not found (ID={bookingId}).";
+                return;
+            }
+
+            schedule = await Db.Schedules
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.ScheduleId == booking.ScheduleId);
+
+            if (schedule is null)
+            {
+                loadError = "Schedule not found for this booking.";
+                return;
+            }
+
+            Seats = await Db.BookingSeats
+                .Where(bs => bs.BookingId == bookingId)
+                .AsNoTracking()
+                .Select(bs => bs.SeatCode)
+                .OrderBy(x => x)
+                .ToListAsync();
+
+            // Total price: prefer Booking.TotalPrice; fallback to sum(BookingSeats.Price); fallback BasePrice * seatCount
+            TotalPrice = booking.TotalPrice;
+
+            if (TotalPrice <= 0)
+            {
+                var seatSum = await Db.BookingSeats
+                    .Where(bs => bs.BookingId == bookingId)
+                    .AsNoTracking()
+                    .SumAsync(bs => (decimal?)bs.Price) ?? 0m;
+
+                TotalPrice = seatSum > 0 ? seatSum : (schedule.BasePrice * Seats.Count);
+            }
+
+            DepartureText = schedule.DepartureTime.ToString("dd MMM yyyy, HH:mm");
+            ArrivalText = schedule.ArrivalTime.ToString("dd MMM yyyy, HH:mm");
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.InnerException?.Message ?? ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoConfirm()
+    {
+        if (PayDisabled) return;
+
+        // keep bookingId so Confirm can load the same booking
+        Nav.NavigateTo($"/confirm?bookingId={bookingId}");
+    }
+
+    private void StartTimer()
+    {
+        _timer = new System.Timers.Timer(1000);
+        _timer.AutoReset = true;
+
+        _timer.Elapsed += async (_, __) =>
+        {
+            if (_remaining > TimeSpan.Zero)
+            {
+                _remaining = _remaining - TimeSpan.FromSeconds(1);
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                _timer?.Stop();
+                await InvokeAsync(StateHasChanged);
+            }
+        };
+
+        _timer.Start();
+    }
+
+    public void Dispose()
+    {
+        if (_timer is not null)
+        {
+            _timer.Stop();
+            _timer.Dispose();
+        }
+    }
+}

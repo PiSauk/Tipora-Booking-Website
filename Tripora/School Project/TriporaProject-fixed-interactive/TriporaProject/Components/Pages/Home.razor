@@ -1,0 +1,175 @@
+﻿@page "/"
+@layout TriporaProject.Components.Layout.TriporaLayout
+
+<main>
+    <section class="hero">
+        <div class="hero__bg"></div>
+        <div class="hero__overlay"></div>
+
+        <div class="container hero__content">
+            <h1>Book Bus Tickets Across Southeast Asia</h1>
+            <p class="hero__subtitle">
+                Fast search, clear schedules, and easy booking all in one place.
+            </p>
+
+            <div class="search-card">
+                <div class="search-card__row">
+                    <div class="field">
+                        <label>From</label>
+                        <input @bind="from" placeholder="e.g., Singapore" />
+                    </div>
+
+                    <div class="field">
+                        <label>To</label>
+                        <input @bind="to" placeholder="e.g., Kuala Lumpur" />
+                    </div>
+
+                    <div class="field">
+                        <label>Departure Date</label>
+                        <input type="date" @bind="date" />
+                    </div>
+
+                    <div class="field">
+                        <label>No. of Pax</label>
+                        <select @bind="pax">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                        </select>
+                    </div>
+
+                    <a class="btn btn--primary btn--block"
+                       href="@($"/search?from={Uri.EscapeDataString(from)}&to={Uri.EscapeDataString(to)}&date={date:yyyy-MM-dd}&pax={pax}")">
+                        Search Bus
+                    </a>
+                </div>
+
+                <div class="search-card__meta">
+                    Example: Singapore → Kuala Lumpur
+                </div>
+            </div>
+
+            <div class="trust">
+                <div class="trust__item">Fast search</div>
+                <div class="trust__item">Multiple operators</div>
+                <div class="trust__item">Secure checkout (later)</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="section section--soft">
+        <div class="container">
+            <div class="section__head">
+                <h2>Why Tripora</h2>
+                <p>Designed for clarity — inspired by real booking platforms.</p>
+            </div>
+
+            <div class="grid-2">
+                <article class="card card--row">
+                    <div class="icon">📅</div>
+                    <div>
+                        <h3>Clear Schedules</h3>
+                        <p>View departure/arrival timing and operator details in a single place.</p>
+                    </div>
+                </article>
+
+                <article class="card card--row">
+                    <div class="icon">🪑</div>
+                    <div>
+                        <h3>Seat Selection</h3>
+                        <p>Select seats directly based on availability before confirming the booking.</p>
+                    </div>
+                </article>
+
+                <article class="card card--row">
+                    <div class="icon">🧾</div>
+                    <div>
+                        <h3>Booking Confirmation</h3>
+                        <p>Get a booking confirmation page after selecting seats and submitting.</p>
+                    </div>
+                </article>
+
+                <article class="card card--row">
+                    <div class="icon">🔒</div>
+                    <div>
+                        <h3>Account Login</h3>
+                        <p>Login ensures bookings are linked to a user account for tracking.</p>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq" class="section">
+        <div class="container">
+            <div class="section__head">
+                <h2>Frequently Asked Questions</h2>
+                <p>Quick answers about booking, seats, and login.</p>
+            </div>
+
+            <div class="faq-html">
+                <details class="faq-item" open>
+                    <summary class="faq-q">
+                        How do I book a bus ticket on Tripora?
+                        <span class="faq-icon"></span>
+                    </summary>
+                    <div class="faq-a">
+                        Search schedules, click a schedule, select your seats, then confirm the booking.
+                    </div>
+                </details>
+
+                <details class="faq-item">
+                    <summary class="faq-q">
+                        Can I select my own seats?
+                        <span class="faq-icon"></span>
+                    </summary>
+                    <div class="faq-a">
+                        Yes. Seats are shown based on availability for the selected schedule.
+                    </div>
+                </details>
+
+                <details class="faq-item">
+                    <summary class="faq-q">
+                        Why do I need to log in?
+                        <span class="faq-icon"></span>
+                    </summary>
+                    <div class="faq-a">
+                        Login links each booking to your user account in the database.
+                    </div>
+                </details>
+
+                <details class="faq-item">
+                    <summary class="faq-q">
+                        Will my login stay after refresh?
+                        <span class="faq-icon"></span>
+                    </summary>
+                    <div class="faq-a">
+                        This project uses a lecture-style login method, so login may reset after a full refresh.
+                    </div>
+                </details>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer id="footer" class="footer">
+    <div class="container footer__inner">
+        <div>
+            <strong>Tripora</strong>
+            <p>Bus booking made simple.</p>
+        </div>
+        <div class="footer__bottom">
+            © @DateTime.Now.Year Tripora
+        </div>
+    </div>
+</footer>
+
+@code {
+    // Search inputs
+    string from = "";
+    string to = "";
+    DateTime date = DateTime.Today;
+    int pax = 1;
+}

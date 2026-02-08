@@ -1,0 +1,214 @@
+﻿@inherits LayoutComponentBase
+@using TriporaProject.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+<div class="layout-root">
+
+  
+    <header class="nav">
+        <div class="container nav__inner">
+
+           
+            <a class="nav__logo" @onclick="@(() => Nav.NavigateTo("/"))">
+                Tripora
+            </a>
+
+            
+            <nav class="nav__links">
+                <a href="#features">Features</a>
+                <a href="#faq">FAQ</a>
+                <a href="#footer">Contact</a>
+
+                @if (!Auth.IsLoggedIn)
+                {
+                    <button class="btn btn--ghost" type="button" @onclick="OpenLogin">
+                        Log in
+                    </button>
+                    <button class="btn btn--primary" type="button" @onclick="OpenSignup">
+                        Sign up
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn--ghost"
+                            type="button"
+                            @onclick="@(() => Nav.NavigateTo("/mybooking"))">
+                        @Auth.CurrentUser!.Name
+                    </button>
+
+                    <button class="btn btn--primary" type="button" @onclick="Logout">
+                        Logout
+                    </button>
+                }
+            </nav>
+
+        </div>
+    </header>
+
+ 
+    <main class="layout-body">
+        @Body
+    </main>
+
+</div>
+
+
+@if (showAuthPopup)
+{
+    <div class="auth-overlay" @onclick="ClosePopup">
+        <div class="auth-box" @onclick:stopPropagation>
+
+            <div class="auth-head">
+                <h3>@(authMode == "login" ? "Login" : "Sign up")</h3>
+                <button class="auth-close" type="button" @onclick="ClosePopup">×</button>
+            </div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab @(authMode == "login" ? "is-active" : "")"
+                        type="button"
+                        @onclick="@(() => SetAuthMode("login"))">
+                    Login
+                </button>
+
+                <button class="auth-tab @(authMode == "signup" ? "is-active" : "")"
+                        type="button"
+                        @onclick="@(() => SetAuthMode("signup"))">
+                    Sign up
+                </button>
+            </div>
+
+            <div class="auth-body">
+                @if (authMode == "signup")
+                {
+                    <label>Name</label>
+                    <input class="auth-input" @bind="name" />
+                }
+
+                <label>Email</label>
+                <input class="auth-input" @bind="email" />
+
+                <label>Password</label>
+                <input class="auth-input" type="password" @bind="password" />
+
+                @if (authMode == "signup")
+                {
+                    <label>Confirm Password</label>
+                    <input class="auth-input" type="password" @bind="confirmPassword" />
+                }
+
+            <button class="btn btn--primary btn--block"
+                    type="button"
+                    @onclick="SubmitAuth"
+                    disabled="@isAuthBusy">
+                @(isAuthBusy
+                                ? "Please wait..."
+                                : (authMode == "login" ? "Login" : "Create account"))
+                </button>
+
+                @if (!string.IsNullOrWhiteSpace(authMessage))
+                {
+                    <div class="auth-msg">@authMessage</div>
+                }
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+    bool showAuthPopup = false;
+    string authMode = "login";
+
+    string name = "";
+    string email = "";
+    string password = "";
+    string confirmPassword = "";
+    string authMessage = "";
+    bool isAuthBusy = false;
+
+    void OpenLogin()
+    {
+        authMode = "login";
+        showAuthPopup = true;
+        ResetAuth();
+    }
+
+    void OpenSignup()
+    {
+        authMode = "signup";
+        showAuthPopup = true;
+        ResetAuth();
+    }
+
+    void SetAuthMode(string mode)
+    {
+        authMode = mode;
+        ResetAuth();
+    }
+
+    void ClosePopup()
+    {
+        showAuthPopup = false;
+        ResetAuth();
+    }
+
+    void ResetAuth()
+    {
+        name = "";
+        email = "";
+        password = "";
+        confirmPassword = "";
+        authMessage = "";
+        isAuthBusy = false;
+    }
+
+    async Task SubmitAuth()
+    {
+        isAuthBusy = true;
+        authMessage = "";
+
+        try
+        {
+            if (authMode == "signup")
+            {
+                if (password != confirmPassword)
+                {
+                    authMessage = "Passwords do not match.";
+                    return;
+                }
+
+                var (ok, msg) = await Auth.RegisterAsync(name, email, password);
+                authMessage = msg;
+
+                if (ok)
+                {
+                    showAuthPopup = false;
+                }
+                return;
+            }
+
+            var (loginOk, loginMsg) = await Auth.LoginAsync(email, password);
+            authMessage = loginMsg;
+
+            if (loginOk)
+            {
+                showAuthPopup = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            authMessage = ex.Message;
+        }
+        finally
+        {
+            isAuthBusy = false;
+        }
+    }
+
+    void Logout()
+    {
+        Auth.Logout();
+        Nav.NavigateTo("/");
+    }
+}

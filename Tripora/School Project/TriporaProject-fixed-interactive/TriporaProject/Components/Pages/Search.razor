@@ -1,0 +1,189 @@
+﻿@page "/search"
+@layout TriporaProject.Components.Layout.TriporaLayout
+
+@using TriporaProject.Models
+@using TriporaProject.Services
+@using Microsoft.AspNetCore.Components
+
+@inject NavigationManager Nav
+@inject ScheduleService ScheduleService
+@inject AuthService Auth
+
+<header class="topbar">
+    <div class="container topbar__inner">
+
+        <!-- Only mini search fields -->
+        <form class="mini-search mini-search--compact" @onsubmit="OnMiniSearch" @onsubmit:preventDefault="true">
+            <input type="text" placeholder="From" @bind="from" />
+            <span class="swap" title="Swap">⇄</span>
+            <input type="text" placeholder="To" @bind="to" />
+            <input type="date" @bind="date" />
+            <select @bind="pax">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+
+            <button class="btn btn--primary" type="submit">Search</button>
+        </form>
+
+    </div>
+</header>
+
+<main class="page">
+    <div class="container">
+
+        <div class="crumbs">
+            <NavLink href="/">Home</NavLink>
+            <span>/</span>
+            <span class="crumbs__active">@($"{from} → {to}")</span>
+        </div>
+
+        <section class="routebar">
+            <div class="routebar__left">
+                <div class="routebar__label">Depart Trip</div>
+                <div class="routebar__title">
+                    <strong>@from</strong>
+                    <span class="arrow">→</span>
+                    <strong>@to</strong>
+                </div>
+            </div>
+
+            <div class="routebar__right">
+                <div class="routebar__date">@date.ToString("dd MMM yyyy")</div>
+            </div>
+        </section>
+
+        <section class="results">
+            <div class="results__head">
+                <h2>Available Buses</h2>
+                <span class="results__count">(@schedules.Count trips found)</span>
+            </div>
+
+            @if (isLoading)
+            {
+                <p>Loading schedules...</p>
+            }
+            else if (!string.IsNullOrWhiteSpace(error))
+            {
+                <p style="color:red">@error</p>
+            }
+            else if (schedules.Count == 0)
+            {
+                <p>No buses found for this date.</p>
+            }
+            else
+            {
+                @foreach (var s in schedules)
+                {
+                    <button class="trip-card"
+                            type="button"
+                            @onclick="() => GoToSeats(s.ScheduleId)">
+
+                        <!-- 3 columns: LEFT / MIDDLE / RIGHT -->
+                        <div class="trip-card__main">
+
+                            <!-- LEFT -->
+                            <div class="trip-left">
+                                <div class="trip-date">@s.DepartureTime.ToString("dd MMM yyyy")</div>
+                                <div class="trip-time">@s.DepartureTime.ToString("HH:mm")</div>
+                                <div class="trip-arrive">
+                                    Arrive: @s.ArrivalTime.ToString("dd MMM yyyy, HH:mm")
+                                </div>
+                            </div>
+
+                            <!-- MIDDLE -->
+                            <div class="trip-middle">
+                                <div class="trip-route">
+                                    <span class="trip-from">@from</span>
+                                    <span class="trip-arrow">→</span>
+                                    <span class="trip-to">@to</span>
+                                </div>
+                                <div class="trip-seats">@s.AvailableSeats seats available</div>
+                            </div>
+
+                            <!-- RIGHT -->
+                            <div class="trip-right">
+                                <div class="trip-price">
+                                    SGD <strong>@s.BasePrice.ToString("0.00")</strong>
+                                </div>
+                                <div class="trip-cta">Select seats →</div>
+                            </div>
+
+                        </div>
+                    </button>
+                }
+            }
+        </section>
+    </div>
+</main>
+
+<footer class="footer">
+    <div class="container footer__inner">
+        <div>
+            <strong>Tripora</strong>
+            <p>Bus booking made simple.</p>
+        </div>
+        <div class="footer__bottom">
+            <span>© @DateTime.Now.Year Tripora</span>
+        </div>
+    </div>
+</footer>
+
+@code {
+    [SupplyParameterFromQuery(Name = "from")] public string? FromQ { get; set; }
+    [SupplyParameterFromQuery(Name = "to")] public string? ToQ { get; set; }
+    [SupplyParameterFromQuery(Name = "date")] public DateTime? DateQ { get; set; }
+    [SupplyParameterFromQuery(Name = "pax")] public int? PaxQ { get; set; }
+
+    string from = "Singapore";
+    string to = "Kuala Lumpur";
+    DateTime date = DateTime.Today;
+    int pax = 1;
+
+    bool isLoading = true;
+    string? error;
+    List<Schedule> schedules = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            isLoading = true;
+            error = null;
+
+            if (!string.IsNullOrWhiteSpace(FromQ)) from = FromQ!;
+            if (!string.IsNullOrWhiteSpace(ToQ)) to = ToQ!;
+            if (DateQ.HasValue) date = DateQ.Value;
+            if (PaxQ.HasValue && PaxQ.Value > 0) pax = PaxQ.Value;
+
+            schedules = await ScheduleService.SearchByDateAsync(date);
+        }
+        catch (Exception ex)
+        {
+            error = ex.InnerException?.Message ?? ex.Message;
+            schedules = new();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    void OnMiniSearch()
+    {
+        Nav.NavigateTo(
+            $"/search?from={Uri.EscapeDataString(from)}" +
+            $"&to={Uri.EscapeDataString(to)}" +
+            $"&date={date:yyyy-MM-dd}" +
+            $"&pax={pax}"
+        );
+    }
+
+    void GoToSeats(int scheduleId)
+    {
+        if (scheduleId <= 0) return;
+        Nav.NavigateTo($"/seats?scheduleId={scheduleId}&pax={pax}");
+    }
+}

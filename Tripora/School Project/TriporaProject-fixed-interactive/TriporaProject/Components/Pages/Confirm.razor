@@ -1,0 +1,200 @@
+﻿@page "/confirm"
+@layout TriporaProject.Components.Layout.TriporaLayout
+
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components
+@using TriporaProject.Models
+
+@inject NavigationManager Nav
+@inject TriporaDbContext Db
+@inject TriporaProject.Services.AuthService Auth
+
+<div class="confirm-wrap">
+    <div class="confirm-card">
+
+        <div class="confirm-head">
+            <div class="confirm-badge" aria-hidden="true">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                    <path d="M20 6L9 17l-5-5"
+                          stroke="currentColor"
+                          stroke-width="2.4"
+                          stroke-linecap="round"
+                          stroke-linejoin="round" />
+                </svg>
+            </div>
+
+            <div>
+                <h3 class="confirm-title">Booking Confirmed</h3>
+                <p class="confirm-sub">
+                    Hi <strong>@DisplayName</strong>, your booking has been recorded.
+                    Please arrive at your pickup point 10 minutes early.
+                </p>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(error))
+        {
+            <div class="p-3">
+                <div class="alert alert-danger mb-0">@error</div>
+            </div>
+        }
+        else if (isLoading)
+        {
+            <div class="p-3">
+                <div class="alert alert-secondary mb-0">Loading booking...</div>
+            </div>
+        }
+        else if (booking is null)
+        {
+            <div class="p-3">
+                <div class="alert alert-warning mb-0">Booking not found.</div>
+            </div>
+        }
+        else
+        {
+            <div class="confirm-body">
+
+                <div class="confirm-panel">
+                    <h5>Trip Details</h5>
+
+                    <div class="kv">
+                        <div class="k">Booking ID</div>
+                        <div class="v">#@booking.BookingId</div>
+                    </div>
+
+                    <div class="kv">
+                        <div class="k">Status</div>
+                        <div class="v">@booking.Status</div>
+                    </div>
+
+                    <div class="kv">
+                        <div class="k">Booking Date</div>
+                        <div class="v">@booking.BookingDate.ToString("dd MMM yyyy, HH:mm")</div>
+                    </div>
+
+                    <div class="kv">
+                        <div class="k">Schedule ID</div>
+                        <div class="v">@booking.ScheduleId</div>
+                    </div>
+
+                    <div class="kv">
+                        <div class="k">No. of Seats</div>
+                        <div class="v">@booking.NumSeats</div>
+                    </div>
+
+                    <div class="kv">
+                        <div class="k">Selected Seats</div>
+                        <div class="v">@SeatSummary</div>
+                    </div>
+
+                    <div class="confirm-actions">
+                        <!-- Tripora blue button (no bootstrap) -->
+                        <button class="primary-btn" @onclick="GoHome" type="button">Back to Home</button>
+                    </div>
+                </div>
+
+                <div class="confirm-panel">
+                    <h5>Payment Summary</h5>
+
+                    <div class="kv">
+                        <div class="k">Total</div>
+                        <div class="v">SGD @booking.TotalPrice.ToString("0.00")</div>
+                    </div>
+
+                    <div class="kv">
+                        <div class="k">Amount Paid</div>
+                        <div class="v">SGD @booking.TotalPrice.ToString("0.00")</div>
+                    </div>
+
+                    <div class="kv">
+                        <div class="k">Payment Method</div>
+                        <div class="v">Cash / Card</div>
+                    </div>
+
+                    <!-- Done button removed -->
+                </div>
+
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "bookingId")]
+    public int BookingId { get; set; }
+
+    [SupplyParameterFromQuery(Name = "scheduleId")]
+    public int ScheduleId { get; set; }
+
+    private bool isLoading = true;
+    private string? error;
+
+    private Booking? booking;
+    private List<BookingSeat> seatLines = new();
+
+    private string DisplayName =>
+        Auth.CurrentUser?.Name
+        ?? Auth.CurrentUser?.Email
+        ?? "Guest";
+
+    private string SeatSummary =>
+        seatLines.Count == 0
+            ? "-"
+            : string.Join(", ", seatLines
+                .OrderBy(s => s.SeatCode)
+                .Select(s => s.SeatCode));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var bookingId = BookingId;
+
+            if (bookingId <= 0 && ScheduleId > 0)
+            {
+                bookingId = await Db.Bookings
+                    .Where(b => b.ScheduleId == ScheduleId)
+                    .OrderByDescending(b => b.BookingId)
+                    .Select(b => b.BookingId)
+                    .FirstOrDefaultAsync();
+
+                if (bookingId <= 0)
+                {
+                    error = $"No booking found yet for Schedule ID {ScheduleId}. Please complete seat selection and click Continue to create a booking.";
+                    return;
+                }
+            }
+
+            if (bookingId <= 0)
+            {
+                error = "Missing bookingId. Please book a seat first.";
+                return;
+            }
+
+            booking = await Db.Bookings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.BookingId == bookingId);
+
+            if (booking is null)
+            {
+                error = $"Booking not found (ID={bookingId}).";
+                return;
+            }
+
+            seatLines = await Db.BookingSeats
+                .AsNoTracking()
+                .Where(bs => bs.BookingId == bookingId)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.InnerException?.Message ?? ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void GoHome() => Nav.NavigateTo("/");
+}

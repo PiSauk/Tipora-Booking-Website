@@ -1,0 +1,79 @@
+﻿@using TriporaProject.Services
+@inject AuthService Auth
+@inject NavigationManager Nav
+
+@if (IsOpen)
+{
+    <div class="login-overlay" @onclick="CloseIfOverlay">
+        <div class="login-modal" @onclick:stopPropagation="true">
+            <div class="login-header">
+                <h3>Create account</h3>
+                <button class="login-close" type="button" title="Close" @onclick="Close">×</button>
+            </div>
+
+            <div class="login-body">
+                <label class="login-label">Name</label>
+                <input class="login-input" @bind="name" />
+
+                <label class="login-label">Email</label>
+                <input class="login-input" @bind="email" />
+
+                <label class="login-label">Password</label>
+                <input class="login-input" type="password" @bind="password" />
+
+                <div class="login-actions">
+                    <button class="btn btn-primary" @onclick="DoRegister">Create account</button>
+                    <button class="btn btn-outline-secondary" type="button" @onclick="OpenLoginModal">Back to login</button>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(msg))
+                {
+                    <div class="login-error">@msg</div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    [Parameter] public string? ReturnUrl { get; set; }
+
+    private string name = "";
+    private string email = "";
+    private string password = "";
+    private string? msg;
+
+    private async Task DoRegister()
+    {
+        var (ok, message) = await Auth.RegisterAsync(name, email, password);
+        msg = message;
+
+        if (!ok) return;
+
+        await IsOpenChanged.InvokeAsync(false);
+
+        
+        if (!string.IsNullOrWhiteSpace(ReturnUrl))
+            Nav.NavigateTo(ReturnUrl!, replace: true);
+        else
+            Nav.NavigateTo("/", replace: true);
+    }
+
+    private async Task Close()
+        => await IsOpenChanged.InvokeAsync(false);
+
+    private async Task CloseIfOverlay()
+        => await Close();
+
+    private void OpenLoginModal()
+    {
+        var current = Nav.ToAbsoluteUri(Nav.Uri);
+        var path = current.GetLeftPart(UriPartial.Path);
+        var ru = !string.IsNullOrWhiteSpace(ReturnUrl) ? ReturnUrl! : Nav.Uri;
+
+        Nav.NavigateTo($"{path}?modal=login&returnUrl={Uri.EscapeDataString(ru)}");
+    }
+}
